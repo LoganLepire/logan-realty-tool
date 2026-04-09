@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logan Lepire — Agent Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inconsolata:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ec;
+  --bg2: #ede8df;
+  --surface: #ffffff;
+  --border: #ddd8ce;
+  --border-dark: #c5bfb3;
+  --ink: #1a1814;
+  --ink-mid: #6b6457;
+  --ink-light: #9e9488;
+  --gold: #b5813a;
+  --gold-light: #e8d5b0;
+  --gold-pale: #f7f0e3;
+  --green: #3a7a52;
+  --green-pale: #e8f4ed;
+  --blue: #2c5f8a;
+  --blue-pale: #e8f0f7;
+  --sidebar-w: 240px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--ink);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-top {
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.monogram {
+  width: 44px; height: 44px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.sidebar-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.sidebar-role {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 4px;
+}
+
+.nav-section {
+  padding: 20px 0 8px;
+}
+
+.nav-label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  padding: 0 24px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(181,129,58,0.08); }
+.nav-item.coming-soon { opacity: 0.4; cursor: default; }
+
+.nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+
+.coming-tag {
+  font-family: 'Inconsolata', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  background: rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 20px 24px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.sidebar-date {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  line-height: 1.6;
+}
+
+/* Main */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pages */
+.page { display: none; flex-direction: column; flex: 1; }
+.page.active { display: flex; }
+
+/* Dashboard page */
+.dash-header {
+  padding: 36px 40px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.dash-eyebrow {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.dash-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.dash-title em { font-style: italic; color: var(--gold); }
+
+.dash-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-mid);
+}
+
+.dash-body { padding: 32px 40px; flex: 1; }
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  animation: fadeUp 0.4s ease both;
+}
+
+.stat-card:nth-child(2) { animation-delay: 0.05s; }
+.stat-card:nth-child(3) { animation-delay: 0.1s; }
+.stat-card:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-sub {
+  font-size: 12px;
+  color: var(--ink-light);
+}
+
+.stat-card.gold { border-top: 2px solid var(--gold); }
+.stat-card.green { border-top: 2px solid var(--green); }
+.stat-card.blue { border-top: 2px solid var(--blue); }
+
+/* Dashboard grid */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+
+.dash-grid-left { display: flex; flex-direction: column; gap: 24px; }
+.dash-grid-right { display: flex; flex-direction: column; gap: 24px; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body { padding: 20px; }
+
+/* Calendar embed */
+.calendar-wrap {
+  width: 100%;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.calendar-wrap iframe {
+  width: 100%;
+  height: 480px;
+  border: none;
+  display: block;
+}
+
+/* Tools grid */
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+}
+
+.tool-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: block;
+  background: var(--bg);
+}
+
+.tool-card:hover {
+  border-color: var(--gold);
+  background: var(--gold-pale);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(181,129,58,0.1);
+}
+
+.tool-card.coming {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.tool-icon { font-size: 24px; margin-bottom: 10px; }
+
+.tool-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.tool-desc {
+  font-size: 12px;
+  color: var(--ink-mid);
+  line-height: 1.5;
+}
+
+.tool-badge {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--gold-pale);
+  color: var(--gold);
+  border: 1px solid var(--gold-light);
+}
+
+.tool-badge.coming-badge {
+  background: var(--bg2);
+  color: var(--ink-light);
+  border-color: var(--border);
+}
+
+/* Quick links */
+.quick-links { display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 13px;
+  transition: all 0.15s;
+  background: var(--bg);
+}
+
+.quick-link:hover { border-color: var(--gold); background: var(--gold-pale); color: var(--gold); }
+.quick-link-icon { font-size: 16px; width: 20px; text-align: center; }
+.quick-link-text { flex: 1; }
+.quick-link-arrow { color: var(--ink-light); font-size: 12px; }
+
+/* Appointments log */
+.appt-list { display: flex; flex-direction: column; }
+
+.appt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.appt-item:last-child { border-bottom: none; }
+.appt-item:hover { background: var(--bg); }
+
+.appt-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.appt-dot.buyer { background: var(--blue); }
+.appt-dot.listing { background: #7a3a8a; }
+.appt-dot.showing { background: var(--green); }
+.appt-dot.pending { background: var(--gold); }
+
+.appt-info { flex: 1; }
+.appt-name { font-weight: 400; color: var(--ink); }
+.appt-type { font-size: 11px; color: var(--ink-light); font-family: 'Inconsolata', monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.appt-status {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.appt-status.sent { background: var(--green-pale); color: var(--green); }
+.appt-status.pending { background: var(--gold-pale); color: var(--gold); }
+
+.appt-time { font-size: 12px; color: var(--ink-mid); white-space: nowrap; }
+
+.empty-state {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--ink-light);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.empty-state .empty-icon { font-size: 28px; margin-bottom: 10px; }
+
+/* Tools page */
+.page-header {
+  padding: 36px 40px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.page-eyebrow {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.page-title em { font-style: italic; color: var(--gold); }
+.page-desc { margin-top: 8px; font-size: 14px; color: var(--ink-mid); }
+
+.page-body { padding: 32px 40px; }
+
+.tools-full-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.tool-full-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  text-decoration: none;
+  display: block;
+  transition: all 0.2s;
+}
+
+.tool-full-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(181,129,58,0.1);
+}
+
+.tool-full-card.coming { opacity: 0.5; pointer-events: none; }
+
+.tool-full-icon { font-size: 32px; margin-bottom: 16px; }
+.tool-full-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.tool-full-desc {
+  font-size: 13px;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.tool-full-open {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-top">
+    <div class="monogram">L</div>
+    <div class="sidebar-name">Logan Lepire</div>
+    <div class="sidebar-role">Sadle Real Estate · Portland</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <a class="nav-item active" onclick="showPage('dashboard', this)" href="#">
+      <span class="nav-icon">⊞</span> Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('tools', this)" href="#">
+      <span class="nav-icon">🛠</span> Tools
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Tools</div>
+    <a class="nav-item" href="logan-followup-system.html" target="_blank">
+      <span class="nav-icon">📋</span> Follow-Up System
+    </a>
+    <a class="nav-item" href="OpenHousePicker.html" target="_blank">
+      <span class="nav-icon">🏠</span> Open House Tool
+    </a>
+    <a class="nav-item coming-soon" href="#">
+      <span class="nav-icon">🔗</span> Follow Up Boss
+      <span class="coming-tag">Soon</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Quick Access</div>
+    <a class="nav-item" href="https://mail.google.com" target="_blank">
+      <span class="nav-icon">📧</span> Gmail
+    </a>
+    <a class="nav-item" href="https://calendar.google.com" target="_blank">
+      <span class="nav-icon">📅</span> Calendar
+    </a>
+    <a class="nav-item" href="https://docs.google.com/spreadsheets" target="_blank">
+      <span class="nav-icon">📊</span> Appointment Log
+    </a>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-date" id="sidebarDate"></div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ===== DASHBOARD PAGE ===== -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header">
+      <div class="dash-eyebrow">Good morning</div>
+      <h1 class="dash-title">Welcome back, <em>Logan</em></h1>
+      <p class="dash-subtitle">Here's your day at a glance.</p>
+    </div>
+
+    <div class="dash-body">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card gold">
+          <div class="stat-label">Days Active</div>
+          <div class="stat-value" id="daysActive">—</div>
+          <div class="stat-sub">since July 4, 2025</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Emails Scheduled</div>
+          <div class="stat-value" id="emailsScheduled">—</div>
+          <div class="stat-sub">from appointment log</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Emails Sent</div>
+          <div class="stat-value" id="emailsSent">—</div>
+          <div class="stat-sub">automated follow-ups</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Today's Date</div>
+          <div class="stat-value" id="todayDate">—</div>
+          <div class="stat-sub" id="todayDay">—</div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="dash-grid">
+        <div class="dash-grid-left">
+
+          <!-- Calendar -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📅 Your Calendar</div>
+            </div>
+            <div class="calendar-wrap">
+              <iframe src="https://calendar.google.com/calendar/embed?src=logan%40sadlerealestate.com&ctz=America%2FLos_Angeles&mode=WEEK" style="border:0;" frameborder="0" scrolling="no"></iframe>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="dash-grid-right">
+
+          <!-- Tools quick launch -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🛠 Tools</div>
+            </div>
+            <div class="tools-grid">
+              <a class="tool-card" href="logan-followup-system.html" target="_blank">
+                <div class="tool-icon">📋</div>
+                <div class="tool-name">Follow-Up System</div>
+                <div class="tool-desc">Book & schedule client communications</div>
+                <div class="tool-badge">Open →</div>
+              </a>
+              <a class="tool-card" href="OpenHousePicker.html" target="_blank">
+                <div class="tool-icon">🏠</div>
+                <div class="tool-name">Open House Tool</div>
+                <div class="tool-desc">Capture & manage open house leads</div>
+                <div class="tool-badge">Open →</div>
+              </a>
+              <a class="tool-card coming">
+                <div class="tool-icon">🔗</div>
+                <div class="tool-name">Follow Up Boss</div>
+                <div class="tool-desc">CRM integration via MCP</div>
+                <div class="tool-badge coming-badge">Coming Soon</div>
+              </a>
+              <a class="tool-card" href="logan-followup-system.html#post-meeting" target="_blank">
+                <div class="tool-icon">✅</div>
+                <div class="tool-name">Post-Meeting</div>
+                <div class="tool-desc">Follow-up emails & next steps</div>
+                <div class="tool-badge">Open →</div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick links -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚡ Quick Access</div>
+            </div>
+            <div class="quick-links">
+              <a class="quick-link" href="https://mail.google.com/mail/u/0/#inbox" target="_blank">
+                <span class="quick-link-icon">📧</span>
+                <span class="quick-link-text">Gmail Inbox</span>
+                <span class="quick-link-arrow">↗</span>
+              </a>
+              <a class="quick-link" href="https://calendar.google.com" target="_blank">
+                <span class="quick-link-icon">📅</span>
+                <span class="quick-link-text">Google Calendar</span>
+                <span class="quick-link-arrow">↗</span>
+              </a>
+              <a class="quick-link" href="https://docs.google.com/spreadsheets" target="_blank">
+                <span class="quick-link-icon">📊</span>
+                <span class="quick-link-text">Appointment Log</span>
+                <span class="quick-link-arrow">↗</span>
+              </a>
+              <a class="quick-link" href="https://make.com" target="_blank">
+                <span class="quick-link-icon">⚙️</span>
+                <span class="quick-link-text">Make.com Scenarios</span>
+                <span class="quick-link-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOOLS PAGE ===== -->
+  <div class="page" id="page-tools">
+    <div class="page-header">
+      <div class="page-eyebrow">Agent Toolkit</div>
+      <h1 class="page-title">Your <em>Tools</em></h1>
+      <p class="page-desc">Everything you've built to run your business like a pro.</p>
+    </div>
+    <div class="page-body">
+      <div class="tools-full-grid">
+
+        <a class="tool-full-card" href="logan-followup-system.html" target="_blank">
+          <div class="tool-full-icon">📋</div>
+          <div class="tool-full-name">Client Follow-Up System</div>
+          <div class="tool-full-desc">Book an appointment and automatically send a confirmation, 24hr reminder, and 1hr reminder to your client — plus a self-reminder text to send your follow-up email after the meeting.</div>
+          <div class="tool-full-open">Open Tool →</div>
+        </a>
+
+        <a class="tool-full-card" href="OpenHousePicker.html" target="_blank">
+          <div class="tool-full-icon">🏠</div>
+          <div class="tool-full-name">Open House Tool</div>
+          <div class="tool-full-desc">Capture visitor information at open houses, manage leads, and follow up with attendees after the event.</div>
+          <div class="tool-full-open">Open Tool →</div>
+        </a>
+
+        <a class="tool-full-card" href="logan-followup-system.html" target="_blank">
+          <div class="tool-full-icon">✅</div>
+          <div class="tool-full-name">Post-Meeting Follow-Up</div>
+          <div class="tool-full-desc">Generate a personalized follow-up email based on meeting notes, with a next steps checklist tailored to buyer, listing, or showing appointments.</div>
+          <div class="tool-full-open">Open Tool →</div>
+        </a>
+
+        <a class="tool-full-card coming">
+          <div class="tool-full-icon">🔗</div>
+          <div class="tool-full-name">Follow Up Boss MCP</div>
+          <div class="tool-full-desc">Connect directly to your Follow Up Boss CRM to manage leads, tasks, and pipeline without switching tabs.</div>
+          <div class="tool-full-open" style="color:var(--ink-light);">Coming Soon</div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// Navigation
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// Date & stats
+function updateDate() {
+  const now = new Date();
+  const start = new Date('2025-07-04');
+  const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  document.getElementById('daysActive').textContent = days;
+  document.getElementById('todayDate').textContent = `${monthNames[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('todayDay').textContent = dayNames[now.getDay()];
+
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  document.querySelector('.dash-eyebrow').textContent = greeting;
+
+  document.getElementById('sidebarDate').innerHTML = `
+    ${dayNames[now.getDay()]}<br>
+    ${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}
+  `;
+}
+
+// Placeholder stats — will show dashes until connected to sheet
+document.getElementById('emailsScheduled').textContent = '—';
+document.getElementById('emailsSent').textContent = '—';
+
+updateDate();
+</script>
+</body>
+</html>
