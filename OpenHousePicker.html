@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏡 Open House Picker — Logan's KW Tool</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); color: white; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header .subtitle { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+  .header .badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+  .tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 24px; }
+  .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #718096; transition: all 0.15s; }
+  .tab.active { background: #2b6cb0; color: white; }
+  .tab:hover:not(.active) { background: #f7fafc; color: #2b6cb0; }
+
+  .card { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid #f0f4f8; display: flex; align-items: center; justify-content: space-between; }
+  .card-header h2 { font-size: 16px; font-weight: 700; color: #1a202c; }
+  .card-header .count { background: #ebf8ff; color: #2b6cb0; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .card-body { padding: 20px; }
+
+  /* SMART PICKS */
+  .picks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .picks-grid { grid-template-columns: 1fr; } }
+  .pick-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.15s; position: relative; }
+  .pick-card:hover { border-color: #2b6cb0; box-shadow: 0 2px 12px rgba(43,108,176,0.15); }
+  .pick-card.selected { border-color: #2b6cb0; background: #ebf8ff; }
+  .pick-card .day-badge { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .pick-card .address { font-size: 15px; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+  .pick-card .price { font-size: 20px; font-weight: 800; color: #2b6cb0; margin-bottom: 8px; }
+  .pick-card .agent { font-size: 13px; color: #4a5568; margin-bottom: 6px; }
+  .pick-card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .tag.fresh { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+  .tag.sweet { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .tag.area { background: #f3f0ff; color: #553c9a; border: 1px solid #d6bcfa; }
+  .tag.score { background: #ebf8ff; color: #2c5282; border: 1px solid #bee3f8; }
+
+  .pick-check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e0; display: flex; align-items: center; justify-content: center; }
+  .pick-card.selected .pick-check { background: #2b6cb0; border-color: #2b6cb0; color: white; font-size: 12px; }
+
+  /* OUTREACH */
+  .outreach-listing-select { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; color: #1a202c; background: white; margin-bottom: 16px; cursor: pointer; }
+  .script-box { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; position: relative; }
+  .script-label { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .script-text { font-size: 14px; color: #2d3748; line-height: 1.6; white-space: pre-wrap; }
+  .copy-btn { position: absolute; top: 12px; right: 12px; background: #2b6cb0; color: white; border: none; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .copy-btn:hover { background: #2c5282; }
+  .copy-btn.copied { background: #276749; }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filter-group select, .filter-group input { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 13px; color: #1a202c; background: white; min-width: 140px; }
+  .filter-group input[type=range] { min-width: 120px; padding: 4px 0; }
+  .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: #718096; }
+
+  /* TABLE */
+  .listing-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .listing-table th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f4f8; background: #f7fafc; cursor: pointer; user-select: none; }
+  .listing-table th:hover { color: #2b6cb0; }
+  .listing-table td { padding: 11px 12px; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+  .listing-table tr:hover td { background: #f7fafc; }
+  .listing-table tr:last-child td { border-bottom: none; }
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .status-ACT { background: #f0fff4; color: #276749; }
+  .status-BMP { background: #fffbeb; color: #92400e; }
+  .status-SSP { background: #fff5f5; color: #c53030; }
+  .score-bar { height: 5px; border-radius: 3px; background: #e2e8f0; margin-top: 4px; }
+  .score-fill { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #2b6cb0, #63b3ed); }
+  .dom-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+  .dom-fresh { background: #f0fff4; color: #276749; }
+  .dom-mid { background: #fffbeb; color: #92400e; }
+  .dom-old { background: #fff5f5; color: #c53030; }
+  .select-btn { background: white; border: 1.5px solid #2b6cb0; color: #2b6cb0; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .select-btn:hover, .select-btn.selected-btn { background: #2b6cb0; color: white; }
+
+  /* IMPORT */
+  .import-area { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.15s; margin-bottom: 16px; }
+  .import-area:hover { border-color: #2b6cb0; background: #ebf8ff; }
+  .import-area h3 { font-size: 16px; font-weight: 700; color: #4a5568; margin-bottom: 8px; }
+  .import-area p { font-size: 13px; color: #718096; }
+  .import-textarea { width: 100%; height: 200px; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-family: monospace; resize: vertical; margin-bottom: 12px; }
+  .import-btn { background: #2b6cb0; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
+  .import-btn:hover { background: #2c5282; }
+  .import-instructions { background: #f7fafc; border-radius: 8px; padding: 14px; font-size: 13px; color: #4a5568; line-height: 1.7; }
+  .import-instructions code { background: #e2e8f0; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+
+  /* WEEKEND PLAN */
+  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .plan-grid { grid-template-columns: 1fr; } }
+  .plan-day { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+  .plan-day h3 { font-size: 14px; font-weight: 700; color: #2b6cb0; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f4f8; }
+  .plan-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #f7fafc; border-radius: 8px; margin-bottom: 8px; }
+  .plan-item-info { flex: 1; }
+  .plan-item-address { font-size: 13px; font-weight: 700; color: #1a202c; }
+  .plan-item-agent { font-size: 12px; color: #718096; margin-top: 2px; }
+  .plan-item-price { font-size: 14px; font-weight: 800; color: #2b6cb0; margin-top: 3px; }
+  .plan-remove { background: none; border: none; color: #fc8181; font-size: 18px; cursor: pointer; padding: 0; line-height: 1; }
+  .plan-empty { color: #a0aec0; font-size: 13px; font-style: italic; text-align: center; padding: 20px; }
+  .plan-actions { margin-top: 16px; display: flex; gap: 10px; }
+  .action-btn { flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: #2b6cb0; color: white; }
+  .btn-primary:hover { background: #2c5282; }
+  .btn-secondary { background: #f0f4f8; color: #4a5568; border: 1.5px solid #e2e8f0; }
+  .btn-secondary:hover { background: #e2e8f0; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #1a202c; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; transform: translateY(80px); transition: transform 0.3s; z-index: 1000; }
+  .toast.show { transform: translateY(0); }
+
+  .section-hidden { display: none; }
+  .weekend-dates { font-size: 20px; font-weight: 800; color: #2b6cb0; margin-bottom: 8px; }
+  .info-row { display: flex; gap: 6px; align-items: center; font-size: 13px; color: #718096; margin-bottom: 16px; }
+  .info-row strong { color: #2d3748; }
+
+  /* Algo explanation */
+  .algo-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .algo-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .algo-pill.a { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+  .algo-pill.b { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .algo-pill.c { background: #f3f0ff; color: #553c9a; border: 1px solid #d6bcfa; }
+  .algo-pill.d { background: #ebf8ff; color: #2c5282; border: 1px solid #bee3f8; }
+
+  .sort-icon { font-size: 10px; margin-left: 4px; }
+
+  /* PDF DROP ZONE */
+  .pdf-drop-zone { border: 2px dashed #2b6cb0; border-radius: 12px; padding: 36px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f0f7ff; margin-bottom: 20px; position: relative; }
+  .pdf-drop-zone:hover, .pdf-drop-zone.dragover { background: #dbeafe; border-color: #1d4ed8; transform: scale(1.01); }
+  .pdf-drop-zone .drop-icon { font-size: 40px; margin-bottom: 10px; }
+  .pdf-drop-zone h3 { font-size: 17px; font-weight: 700; color: #1e40af; margin-bottom: 6px; }
+  .pdf-drop-zone p { font-size: 13px; color: #4a5568; }
+  .pdf-drop-zone input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .pdf-processing { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 14px; color: #92400e; display: none; align-items: center; gap: 10px; }
+  .pdf-processing.show { display: flex; }
+  .spinner { width: 18px; height: 18px; border: 2.5px solid #fcd34d; border-top-color: #d97706; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pdf-success { background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 14px; color: #276749; display: none; }
+  .pdf-success.show { display: block; }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #a0aec0; font-size: 13px; font-weight: 600; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🏡 Open House Picker</h1>
+    <div class="subtitle">KW Realty Professionals · Logan Lepire</div>
+  </div>
+  <div class="badge" id="inventoryBadge">84 listings loaded</div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('picks')">⭐ Smart Picks</button>
+    <button class="tab" onclick="showTab('plan')">📋 My Weekend</button>
+    <button class="tab" onclick="showTab('outreach')">✉️ Outreach</button>
+    <button class="tab" onclick="showTab('browse')">🔍 Browse All</button>
+    <button class="tab" onclick="showTab('import')">⬆️ Update Inventory</button>
+  </div>
+
+  <!-- SMART PICKS TAB -->
+  <div id="tab-picks">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>This Weekend's Best Picks</h2>
+          <div class="algo-pills">
+            <span class="algo-pill a">✓ Active listings only</span>
+            <span class="algo-pill b">✓ $350k–$700k sweet spot</span>
+            <span class="algo-pill c">✓ Freshest first</span>
+            <span class="algo-pill d">✓ Geographic spread</span>
+          </div>
+        </div>
+        <div>
+          <div class="weekend-dates" id="weekendLabel">—</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="info-row">Click any card to add it to <strong>My Weekend Plan</strong>. Aim for 2 per day, geographic variety.</p>
+        <div class="picks-grid" id="picksGrid"><!-- filled by JS --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEKEND PLAN TAB -->
+  <div id="tab-plan" class="section-hidden">
+    <div class="card">
+      <div class="card-header">
+        <h2>📋 My Weekend Plan</h2>
+        <div class="count" id="planCount">0 selected</div>
+      </div>
+      <div class="card-body">
+        <div class="plan-grid">
+          <div class="plan-day">
+            <h3>Saturday <span id="satDate"></span></h3>
+            <div id="satPlan"><div class="plan-empty">No homes selected yet</div></div>
+          </div>
+          <div class="plan-day">
+            <h3>Sunday <span id="sunDate"></span></h3>
+            <div id="sunPlan"><div class="plan-empty">No homes selected yet</div></div>
+          </div>
+        </div>
+        <div class="plan-actions">
+          <button class="action-btn btn-secondary" onclick="clearPlan()">Clear All</button>
+          <button class="action-btn btn-primary" onclick="showTab('outreach')">Generate Outreach Scripts →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTREACH TAB -->
+  <div id="tab-outreach" class="section-hidden">
+    <div class="card">
+      <div class="card-header"><h2>✉️ Outreach Scripts</h2></div>
+      <div class="card-body">
+        <label style="font-size:12px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Select Listing</label>
+        <select class="outreach-listing-select" id="outreachSelect" onchange="renderOutreach()">
+          <option value="">— Choose a listing —</option>
+        </select>
+        <div id="outreachScripts"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BROWSE ALL TAB -->
+  <div id="tab-browse" class="section-hidden">
+    <div class="card">
+      <div class="card-header">
+        <h2>Browse All Listings</h2>
+        <div class="count" id="browseCount">84 listings</div>
+      </div>
+      <div class="card-body">
+        <div class="filters">
+          <div class="filter-group">
+            <label>Status</label>
+            <select id="filterStatus" onchange="renderBrowse()">
+              <option value="">All</option>
+              <option value="ACT" selected>Active Only</option>
+              <option value="BMP">Backup Offer</option>
+              <option value="SSP">Short Sale</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Min Price</label>
+            <select id="filterMinPrice" onchange="renderBrowse()">
+              <option value="0">Any</option>
+              <option value="200000">$200k+</option>
+              <option value="350000" selected>$350k+</option>
+              <option value="500000">$500k+</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Max Price</label>
+            <select id="filterMaxPrice" onchange="renderBrowse()">
+              <option value="99000000">Any</option>
+              <option value="700000" selected>Under $700k</option>
+              <option value="1000000">Under $1M</option>
+              <option value="500000">Under $500k</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Listed Within</label>
+            <select id="filterRecency" onchange="renderBrowse()">
+              <option value="999">Any time</option>
+              <option value="14" selected>Last 14 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="60">Last 60 days</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Agent Search</label>
+            <input type="text" id="filterAgent" placeholder="Agent name..." oninput="renderBrowse()" style="padding:7px 10px;">
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="listing-table">
+            <thead>
+              <tr>
+                <th onclick="sortBrowse('address')">Address <span class="sort-icon">↕</span></th>
+                <th onclick="sortBrowse('price')">Price <span class="sort-icon">↕</span></th>
+                <th onclick="sortBrowse('dom')">Days Listed <span class="sort-icon">↕</span></th>
+                <th onclick="sortBrowse('agent')">Agent <span class="sort-icon">↕</span></th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Add to Plan</th>
+              </tr>
+            </thead>
+            <tbody id="browseTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT TAB -->
+  <div id="tab-import" class="section-hidden">
+    <div class="card">
+      <div class="card-header"><h2>⬆️ Update Inventory</h2></div>
+      <div class="card-body">
+
+        <!-- PDF DROP ZONE -->
+        <div class="pdf-drop-zone" id="pdfDropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <input type="file" accept=".pdf" onchange="handleFileSelect(event)" />
+          <div class="drop-icon">📄</div>
+          <h3>Drop your inventory PDF here</h3>
+          <p>Or click to browse — drag & drop the weekly KW inventory PDF from Tanya</p>
+        </div>
+
+        <div class="pdf-processing" id="pdfProcessing">
+          <div class="spinner"></div>
+          <span id="pdfProcessingMsg">Reading PDF...</span>
+        </div>
+
+        <div class="pdf-success" id="pdfSuccess"></div>
+
+        <div class="divider">or paste CSV manually</div>
+
+        <div class="import-instructions" style="margin-bottom:16px;">
+          <strong>Manual format</strong> — one listing per line:<br>
+          <code>MLS#, Address, Agent, List Date (YYYY-MM-DD), Status, Price</code><br>
+          Example: <code>190963839, 5641 SE 92nd Ave, Andrew Berlinberg, 2026-03-30, ACT, 480000</code>
+        </div>
+        <textarea class="import-textarea" id="importText" placeholder="190963839, 5641 SE 92nd Ave, Andrew Berlinberg, 2026-03-30, ACT, 480000&#10;199132506, 5407 SE Flavel St, Andrew Berlinberg, 2026-03-06, ACT, 419000&#10;..."></textarea>
+        <button class="import-btn" onclick="importListings()">Import CSV</button>
+        <div id="importFeedback" style="margin-top:12px;font-size:13px;color:#276749;"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// ============================================================
+// LISTING DATA — Updated: 2026-03-30
+// ============================================================
+let LISTINGS = [
+  { mls:'190963839', address:'5641 SE 92nd Ave',         area:'143', agent:'Andrew Berlinberg',    listDate:'2026-03-30', status:'ACT', price:480000 },
+  { mls:'199132506', address:'5407 SE Flavel St',         area:'143', agent:'Andrew Berlinberg',    listDate:'2026-03-06', status:'ACT', price:419000 },
+  { mls:'286864072', address:'4808 SW Stonebrook Ct',     area:'148', agent:'Andrew Berlinberg',    listDate:'2026-03-06', status:'ACT', price:1400000 },
+  { mls:'437173164', address:'5594 SW Erickson Ave',      area:'150', agent:'Andrew Berlinberg',    listDate:'2026-02-06', status:'ACT', price:275000 },
+  { mls:'536755793', address:'7910 SW 31st Ave',          area:'148', agent:'Andrew Berlinberg',    listDate:'2026-01-08', status:'ACT', price:285000 },
+  { mls:'130338799', address:'4954 NE Drew St',           area:'176', agent:'BreAnn Borgaard',      listDate:'2026-03-27', status:'ACT', price:400000 },
+  { mls:'289261159', address:'6421 SE 22nd St',           area:'144', agent:'Summer Browner',       listDate:'2025-12-04', status:'ACT', price:560000 },
+  { mls:'526888020', address:'18863 Indian Springs Rd',   area:'147', agent:'Summer Browner',       listDate:'2025-08-07', status:'ACT', price:914900 },
+  { mls:'357925788', address:'13845 SW 104th Ave',        area:'151', agent:'Tiffanie Danley',      listDate:'2026-03-11', status:'ACT', price:475000 },
+  { mls:'157706949', address:'720 NW Naito Pkwy',         area:'148', agent:'Michele DesCombes',    listDate:'2026-01-19', status:'ACT', price:219000 },
+  { mls:'24588164',  address:'9980 Pine Ridge Dr',        area:'195', agent:'Zachary Eaton',        listDate:'2024-05-17', status:'ACT', price:639900 },
+  { mls:'151773110', address:'3412 SW 13th Ave',          area:'148', agent:'Zachary Eaton',        listDate:'2025-02-07', status:'BMP', price:825000 },
+  { mls:'207880079', address:'2065 SW 75th Ave',          area:'148', agent:'Zachary Eaton',        listDate:'2026-02-12', status:'ACT', price:2100000 },
+  { mls:'367012708', address:'2309 SW 1st Ave',           area:'148', agent:'Zachary Eaton',        listDate:'2025-03-25', status:'ACT', price:385000 },
+  { mls:'654437124', address:'11206 SW Pintail Loop',     area:'150', agent:'Natalie Frainey',      listDate:'2026-03-27', status:'ACT', price:650000 },
+  { mls:'524399825', address:'6625 W Burnside St',        area:'148', agent:'Shey Gladstone',       listDate:'2026-03-26', status:'ACT', price:199000 },
+  { mls:'582536035', address:'5696 Windfield Loop',       area:'147', agent:'Shey Gladstone',       listDate:'2026-03-18', status:'ACT', price:625000 },
+  { mls:'126099442', address:'30778 SW Fir Ave',          area:'151', agent:'Andrea Guest',         listDate:'2026-01-09', status:'ACT', price:569000 },
+  { mls:'186742996', address:'1556 NE 27th Ter',          area:'144', agent:'Andrea Guest',         listDate:'2026-02-04', status:'ACT', price:494900 },
+  { mls:'234333969', address:'3330 SW Primrose St',       area:'148', agent:'Andrea Guest',         listDate:'2026-03-03', status:'ACT', price:579000 },
+  { mls:'285784688', address:'9863 SW Ridge Dr',          area:'150', agent:'Andrea Guest',         listDate:'2025-11-18', status:'ACT', price:800000 },
+  { mls:'768102104', address:'10275 NW Wilshire Ln',      area:'149', agent:'Andrea Guest',         listDate:'2025-05-15', status:'ACT', price:439000 },
+  { mls:'20026395',  address:'30575 NE Fernwood Rd',      area:'156', agent:'Lyndon Hansen',        listDate:'2020-06-04', status:'ACT', price:16500000 },
+  { mls:'285268804', address:'12070 NW Stewartridge Ln',  area:'149', agent:'Rebecca Hartwell',     listDate:'2025-07-23', status:'ACT', price:1750000 },
+  { mls:'752388426', address:'3578 NW Gerritz Ter',       area:'149', agent:'Rebecca Hartwell',     listDate:'2025-05-28', status:'ACT', price:829000 },
+  { mls:'702771354', address:'13061 SE Meadehill Ave',    area:'145', agent:'Eric Herbert',         listDate:'2025-06-27', status:'ACT', price:770000 },
+  { mls:'213753663', address:'7175 SW Hammond Ter',       area:'150', agent:'Carolyn Hoty',         listDate:'2026-01-15', status:'ACT', price:839000 },
+  { mls:'292707789', address:'328 NW Freeman Ave',        area:'152', agent:'Carolyn Hoty',         listDate:'2026-03-19', status:'ACT', price:499900 },
+  { mls:'575079952', address:'1125 NW 9th Ave',           area:'148', agent:'Carolyn Hoty',         listDate:'2025-12-04', status:'ACT', price:285000 },
+  { mls:'766513523', address:'12305 SW Silvertip St',     area:'150', agent:'Carolyn Hoty',         listDate:'2026-02-10', status:'ACT', price:849900 },
+  { mls:'243832988', address:'12825 SW Merganser Ln',     area:'150', agent:'Carey Hughes',         listDate:'2026-02-26', status:'ACT', price:399000 },
+  { mls:'384824458', address:'16410 SW Nighthawk Dr',     area:'150', agent:'Carey Hughes',         listDate:'2026-03-13', status:'ACT', price:1350000 },
+  { mls:'443032195', address:'4873 NW Promenade Ter',     area:'149', agent:'Michelle Hutton',      listDate:'2025-06-12', status:'ACT', price:500000 },
+  { mls:'636606008', address:'13053 NW Lombardy Dr',      area:'149', agent:'Michelle Hutton',      listDate:'2026-02-26', status:'ACT', price:949000 },
+  { mls:'584132277', address:'1509 NE 10th Ave',          area:'142', agent:'Cristina John',        listDate:'2026-02-19', status:'ACT', price:185000 },
+  { mls:'242124803', address:'3035 SE 9th Ave',           area:'143', agent:'Megan Jumago-Simpson', listDate:'2026-03-19', status:'ACT', price:670000 },
+  { mls:'455892178', address:'1517 SW Highland Pkwy',     area:'148', agent:'Megan Jumago-Simpson', listDate:'2026-02-19', status:'ACT', price:900000 },
+  { mls:'504185188', address:'21780 NE Larkspur Ln',      area:'144', agent:'Megan Jumago-Simpson', listDate:'2026-02-07', status:'ACT', price:370000 },
+  { mls:'527870652', address:'2018 NW 16th Ave',          area:'148', agent:'Megan Jumago-Simpson', listDate:'2026-01-01', status:'ACT', price:590000 },
+  { mls:'709586171', address:'1305 SW Upland Dr',         area:'148', agent:'Megan Jumago-Simpson', listDate:'2026-03-25', status:'ACT', price:739000 },
+  { mls:'307992799', address:'21525 SW Frammy Way',       area:'152', agent:'Susan Layne',          listDate:'2025-05-09', status:'ACT', price:564000 },
+  { mls:'24487053',  address:'45500 SW Seghers Rd',       area:'152', agent:'Rob Levy',             listDate:'2024-07-11', status:'ACT', price:1674950 },
+  { mls:'124803290', address:'18115 SW Broad Oak Blvd',   area:'150', agent:'Rob Levy',             listDate:'2025-12-01', status:'ACT', price:565000 },
+  { mls:'291080158', address:'13275 SW Davies Rd',        area:'150', agent:'Rob Levy',             listDate:'2026-03-14', status:'ACT', price:999900 },
+  { mls:'237089386', address:'2547 SW Hillcrest Dr',      area:'148', agent:'Gabriela Mann',        listDate:'2026-02-26', status:'ACT', price:1349999 },
+  { mls:'527386848', address:'4949 SW 141st Ave',         area:'150', agent:'Tomas Navarro',        listDate:'2026-02-12', status:'ACT', price:469900 },
+  { mls:'552920177', address:'4755 NW Shaniko Ct',        area:'149', agent:'Tomas Navarro',        listDate:'2025-07-31', status:'ACT', price:499900 },
+  { mls:'203214701', address:'10478 NW Forestview Way',   area:'149', agent:'James Petersen',       listDate:'2026-01-23', status:'ACT', price:399000 },
+  { mls:'451326982', address:'6496 NW Wenmarie Dr',       area:'149', agent:'Alexander Phan',       listDate:'2025-12-25', status:'ACT', price:539900 },
+  { mls:'684411808', address:'8329 SW 24th Ave',          area:'148', agent:'Alexander Phan',       listDate:'2025-05-06', status:'SSP', price:240000 },
+  { mls:'103360344', address:'7505 SW Alpine Dr',         area:'150', agent:'Rick Sadle',           listDate:'2026-02-23', status:'ACT', price:574000 },
+  { mls:'159650439', address:'7147 NE Stonewater St',     area:'152', agent:'Rick Sadle',           listDate:'2026-02-16', status:'ACT', price:425000 },
+  { mls:'163132526', address:'1536 SE Condor Ave',        area:'144', agent:'Rick Sadle',           listDate:'2025-07-31', status:'ACT', price:525000 },
+  { mls:'286411961', address:'21069 SW Madeira Ter',      area:'151', agent:'Rick Sadle',           listDate:'2025-08-07', status:'ACT', price:364000 },
+  { mls:'294085986', address:'1826 E Carol Ann Dr',       area:'156', agent:'Rick Sadle',           listDate:'2025-09-25', status:'ACT', price:538000 },
+  { mls:'401424599', address:'2590 Long St',              area:'221', agent:'Rick Sadle',           listDate:'2025-10-14', status:'ACT', price:749900 },
+  { mls:'503820284', address:'900 NE 81st Ave',           area:'142', agent:'Rick Sadle',           listDate:'2026-03-11', status:'ACT', price:179000 },
+  { mls:'618735526', address:'453 NE Yamhill St',         area:'156', agent:'Rick Sadle',           listDate:'2026-02-19', status:'ACT', price:325000 },
+  { mls:'619367967', address:'19791 NE Sunnycrest Rd',    area:'156', agent:'Rick Sadle',           listDate:'2026-03-23', status:'ACT', price:1225000 },
+  { mls:'793440701', address:'10813 SW Canterbury Ln',    area:'151', agent:'Rick Sadle',           listDate:'2026-01-15', status:'ACT', price:414900 },
+  { mls:'101659423', address:'3105 NW 144th Ave',         area:'149', agent:'Karina Stark',         listDate:'2026-02-25', status:'ACT', price:799900 },
+  { mls:'314734803', address:'15347 NW Aberdeen Dr',      area:'149', agent:'Karina Stark',         listDate:'2026-02-12', status:'ACT', price:649000 },
+  { mls:'416124969', address:'1195 NW Garibaldi St',      area:'152', agent:'Karina Stark',         listDate:'2026-03-05', status:'ACT', price:649900 },
+  { mls:'747683560', address:'15490 NW Tee Ct',           area:'149', agent:'Karina Stark',         listDate:'2025-10-08', status:'ACT', price:524900 },
+  { mls:'123524937', address:'8510 SW Curry Dr',          area:'151', agent:'Angela Stevens',       listDate:'2026-02-16', status:'ACT', price:369900 },
+  { mls:'346550142', address:'30475 SW Riverwood Dr',     area:'147', agent:'Angela Stevens',       listDate:'2026-03-12', status:'ACT', price:879000 },
+  { mls:'428079945', address:'4517 NE 85th Ave',          area:'142', agent:'Angela Stevens',       listDate:'2026-03-27', status:'ACT', price:450000 },
+  { mls:'591511136', address:'1111 NW 25th Ave',          area:'148', agent:'Angela Stevens',       listDate:'2025-05-01', status:'ACT', price:450000 },
+  { mls:'602235187', address:'15623 SW Raphael Ln',       area:'151', agent:'Angela Stevens',       listDate:'2026-03-20', status:'ACT', price:559900 },
+  { mls:'756365798', address:'12612 NW Barnes Rd',        area:'149', agent:'Angela Stevens',       listDate:'2025-10-31', status:'ACT', price:199000 },
+  { mls:'391303787', address:'3828 NW Devoto Ln',         area:'148', agent:'Troy Stevens',         listDate:'2025-08-20', status:'ACT', price:1595000 },
+  { mls:'433812971', address:'15062 SE Bella Ln',         area:'145', agent:'Troy Stevens',         listDate:'2026-03-05', status:'ACT', price:675000 },
+  { mls:'564672776', address:'333 NW 9th Ave',            area:'148', agent:'Troy Stevens',         listDate:'2026-02-19', status:'ACT', price:312000 },
+  { mls:'664304364', address:'60486 Seventh Mountain Dr', area:'320', agent:'Veronica Story',       listDate:'2025-05-01', status:'ACT', price:1025000 },
+  { mls:'251425025', address:'1400 NW Irving St',         area:'148', agent:'Spencer Voris',        listDate:'2026-03-20', status:'ACT', price:570000 },
+  { mls:'497877096', address:'25583 E Chester Mountain Dr',area:'153',agent:'Katelin Wille',        listDate:'2026-03-12', status:'ACT', price:849900 },
+  { mls:'610521894', address:'68660 E Fairway Estates Rd',area:'153', agent:'Katelin Wille',        listDate:'2026-02-25', status:'ACT', price:379900 },
+  { mls:'149892365', address:'4361 Albert Cir',           area:'147', agent:'Hannah Wolfe',         listDate:'2026-03-20', status:'ACT', price:999000 },
+  { mls:'269068286', address:'6834 SE 83rd Ave',          area:'143', agent:'Bradley Wulf',         listDate:'2025-06-12', status:'ACT', price:475000 },
+  { mls:'320780024', address:'2825 NW Upshur St',         area:'148', agent:'Bradley Wulf',         listDate:'2025-10-15', status:'ACT', price:384900 },
+  { mls:'576332579', address:'8254 SW 74th Ave',          area:'151', agent:'Bradley Wulf',         listDate:'2026-02-19', status:'ACT', price:824900 },
+  { mls:'587332780', address:'6831 SE 83rd Ave',          area:'143', agent:'Bradley Wulf',         listDate:'2025-06-12', status:'ACT', price:325000 },
+  { mls:'439165114', address:'770 NW 185th Ave',          area:'150', agent:'Rochelle Yukich',      listDate:'2026-02-26', status:'ACT', price:279000 },
+  { mls:'790328356', address:'416 NW 13th Ave',           area:'148', agent:'Rochelle Yukich',      listDate:'2025-11-24', status:'SSP', price:185000 },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let weekendPlan = { sat: [], sun: [] }; // [{mls, address, agent, price}]
+let browseSort = { col: 'dom', dir: 1 };
+let currentTab = 'picks';
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmtPrice(p) {
+  if (p >= 1000000) return '$' + (p/1000000).toFixed(2).replace(/\.?0+$/,'') + 'M';
+  return '$' + Math.round(p/1000).toLocaleString() + 'k';
+}
+
+function daysOnMarket(listDate) {
+  const listed = new Date(listDate);
+  const today = new Date();
+  return Math.floor((today - listed) / (1000*60*60*24));
+}
+
+function getWeekendDates() {
+  const today = new Date();
+  const day = today.getDay(); // 0=Sun, 6=Sat
+  let daysToSat = (6 - day + 7) % 7;
+  if (daysToSat === 0) daysToSat = 7; // if today is Sat, get next Sat
+  const sat = new Date(today); sat.setDate(today.getDate() + daysToSat);
+  const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+  const opts = { month:'short', day:'numeric' };
+  return {
+    sat, sun,
+    satStr: sat.toLocaleDateString('en-US', opts),
+    sunStr: sun.toLocaleDateString('en-US', opts),
+    label: `Apr ${sat.getDate()} – ${sun.getDate()}`
+  };
+}
+
+function scoreListings() {
+  const today = new Date();
+  return LISTINGS.map(l => {
+    let score = 0;
+    // Active only
+    if (l.status !== 'ACT') { score -= 100; }
+    // Sweet spot pricing ($350k-$700k gets max points)
+    const p = l.price;
+    if (p >= 350000 && p <= 700000) score += 40;
+    else if (p >= 250000 && p < 350000) score += 20;
+    else if (p > 700000 && p <= 900000) score += 15;
+    else if (p < 250000 || p > 900000) score -= 10;
+    // Recency (newer = better)
+    const dom = daysOnMarket(l.listDate);
+    if (dom <= 7) score += 40;
+    else if (dom <= 14) score += 30;
+    else if (dom <= 30) score += 20;
+    else if (dom <= 60) score += 10;
+    else if (dom <= 90) score += 5;
+    else score -= 5;
+    return { ...l, score, dom };
+  }).sort((a,b) => b.score - a.score);
+}
+
+function getSmartPicks() {
+  const scored = scoreListings().filter(l => l.status === 'ACT');
+  // Try to get geographic diversity (different area prefixes)
+  const picks = [];
+  const usedAreas = new Set();
+  for (const l of scored) {
+    if (picks.length >= 4) break;
+    const dir = l.address.match(/\b(NE|NW|SE|SW|N |S |E |W )/)?.[1]?.trim() || 'other';
+    if (!usedAreas.has(dir) || picks.length >= 2) {
+      picks.push(l);
+      usedAreas.add(dir);
+    }
+  }
+  // Fill remaining if needed
+  for (const l of scored) {
+    if (picks.length >= 4) break;
+    if (!picks.find(p => p.mls === l.mls)) picks.push(l);
+  }
+  return picks.slice(0, 4);
+}
+
+// ============================================================
+// RENDER PICKS
+// ============================================================
+function renderPicks() {
+  const wd = getWeekendDates();
+  document.getElementById('weekendLabel').textContent = wd.label;
+  document.getElementById('satDate').textContent = wd.satStr;
+  document.getElementById('sunDate').textContent = wd.sunStr;
+
+  const picks = getSmartPicks();
+  const days = ['Saturday', 'Saturday', 'Sunday', 'Sunday'];
+  const grid = document.getElementById('picksGrid');
+  const planMls = [...weekendPlan.sat, ...weekendPlan.sun].map(x => x.mls);
+
+  grid.innerHTML = picks.map((l, i) => {
+    const isSelected = planMls.includes(l.mls);
+    const freshLabel = l.dom <= 7 ? `🟢 ${l.dom}d old` : l.dom <= 14 ? `🟡 ${l.dom}d old` : `🟠 ${l.dom}d old`;
+    return `
+    <div class="pick-card ${isSelected ? 'selected' : ''}" onclick="togglePick('${l.mls}', ${i})">
+      <div class="pick-check">${isSelected ? '✓' : ''}</div>
+      <div class="day-badge">${days[i]}</div>
+      <div class="address">${l.address}</div>
+      <div class="price">${fmtPrice(l.price)}</div>
+      <div class="agent">👤 ${l.agent}</div>
+      <div class="tags">
+        <span class="tag fresh">${freshLabel}</span>
+        <span class="tag sweet">${fmtPrice(l.price)}</span>
+        <span class="tag area">Area ${l.area}</span>
+        <span class="tag score">Score ${l.score}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePick(mls, index) {
+  const listing = LISTINGS.find(l => l.mls === mls);
+  const day = index < 2 ? 'sat' : 'sun';
+  const otherDay = day === 'sat' ? 'sun' : 'sat';
+  const inSat = weekendPlan.sat.find(x => x.mls === mls);
+  const inSun = weekendPlan.sun.find(x => x.mls === mls);
+
+  if (inSat) { weekendPlan.sat = weekendPlan.sat.filter(x => x.mls !== mls); }
+  else if (inSun) { weekendPlan.sun = weekendPlan.sun.filter(x => x.mls !== mls); }
+  else {
+    // Add to appropriate day, max 2 per day
+    if (weekendPlan[day].length < 2) weekendPlan[day].push(listing);
+    else if (weekendPlan[otherDay].length < 2) weekendPlan[otherDay].push(listing);
+    else { showToast('Each day already has 2 homes. Remove one first.'); return; }
+  }
+  renderPicks();
+  renderPlan();
+  renderOutreachSelect();
+  updatePlanCount();
+}
+
+// ============================================================
+// RENDER PLAN
+// ============================================================
+function renderPlan() {
+  const wd = getWeekendDates();
+  ['sat','sun'].forEach(day => {
+    const el = document.getElementById(day + 'Plan');
+    const items = weekendPlan[day];
+    if (!items.length) { el.innerHTML = '<div class="plan-empty">No homes selected yet — go to Smart Picks to choose</div>'; return; }
+    el.innerHTML = items.map(l => `
+      <div class="plan-item">
+        <div class="plan-item-info">
+          <div class="plan-item-address">${l.address}</div>
+          <div class="plan-item-agent">${l.agent}</div>
+          <div class="plan-item-price">${fmtPrice(l.price)}</div>
+        </div>
+        <button class="plan-remove" onclick="removePlan('${l.mls}','${day}')" title="Remove">×</button>
+      </div>`).join('');
+  });
+}
+
+function removePlan(mls, day) {
+  weekendPlan[day] = weekendPlan[day].filter(x => x.mls !== mls);
+  renderPlan(); renderPicks(); renderOutreachSelect(); updatePlanCount();
+}
+
+function clearPlan() {
+  weekendPlan = { sat:[], sun:[] };
+  renderPlan(); renderPicks(); renderOutreachSelect(); updatePlanCount();
+}
+
+function updatePlanCount() {
+  const total = weekendPlan.sat.length + weekendPlan.sun.length;
+  document.getElementById('planCount').textContent = total + ' selected';
+}
+
+// ============================================================
+// RENDER OUTREACH
+// ============================================================
+function renderOutreachSelect() {
+  const sel = document.getElementById('outreachSelect');
+  const allPicked = [...weekendPlan.sat, ...weekendPlan.sun];
+  const allListings = allPicked.length ? allPicked : LISTINGS.filter(l => l.status === 'ACT').slice(0, 10);
+
+  sel.innerHTML = '<option value="">— Choose a listing —</option>' +
+    allListings.map(l => `<option value="${l.mls}">${l.address} – ${fmtPrice(l.price)} (${l.agent})</option>`).join('');
+
+  if (allPicked.length && !sel.value) sel.selectedIndex = 1;
+  renderOutreach();
+}
+
+function renderOutreach() {
+  const mls = document.getElementById('outreachSelect').value;
+  const box = document.getElementById('outreachScripts');
+  if (!mls) { box.innerHTML = '<p style="color:#718096;font-size:14px;text-align:center;padding:20px;">Select a listing above to generate scripts</p>'; return; }
+  const l = LISTINGS.find(x => x.mls === mls);
+  if (!l) return;
+
+  const firstName = l.agent.split(' ')[0];
+  const email = `Hi ${firstName}! I love the listing at ${l.address} — ${fmtPrice(l.price)} is a great price point for this market. I'm Logan Lepire on the KW team and I'd love to host an open house for you this weekend if you're open to it. I'll handle all the prep, marketing, door-knocking the neighborhood beforehand, and follow up with every single lead. Just say the word and I'll take it completely off your plate!\n\nLogan Lepire\nKW Realty Professionals\n[your number]`;
+  const text = `Hey ${firstName}, it's Logan Lepire from the KW team! Love your listing at ${l.address}. I'd love to host an open house for you this weekend — I'll handle everything from start to finish. Interested?`;
+  const dm = `Hey ${firstName}! 👋 Saw your listing at ${l.address} — beautiful home. I'm Logan on the KW team. Would you be open to me hosting an open house this weekend? I'll take care of all the details!`;
+
+  box.innerHTML = `
+    <div style="background:#f0fff4;border:1px solid #c6f6d5;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:14px;color:#276749;margin-bottom:4px;">📋 ${l.address}</div>
+      <div style="font-size:13px;color:#4a5568;">${fmtPrice(l.price)} · ${l.agent} · Listed ${l.listDate} · ${daysOnMarket(l.listDate)}d on market</div>
+    </div>
+    ${makeScriptBox('📧 Email Script', email, 'email-' + mls)}
+    ${makeScriptBox('💬 Text Script', text, 'text-' + mls)}
+    ${makeScriptBox('📱 DM / Instagram', dm, 'dm-' + mls)}
+  `;
+}
+
+function makeScriptBox(label, text, id) {
+  return `
+    <div class="script-box">
+      <div class="script-label">${label}</div>
+      <div class="script-text" id="st-${id}">${text}</div>
+      <button class="copy-btn" id="cb-${id}" onclick="copyScript('${id}')">Copy</button>
+    </div>`;
+}
+
+function copyScript(id) {
+  const text = document.getElementById('st-' + id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('cb-' + id);
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    showToast('Copied to clipboard!');
+  });
+}
+
+// ============================================================
+// BROWSE ALL
+// ============================================================
+function renderBrowse() {
+  const status = document.getElementById('filterStatus').value;
+  const minP = parseInt(document.getElementById('filterMinPrice').value) || 0;
+  const maxP = parseInt(document.getElementById('filterMaxPrice').value) || 99000000;
+  const days = parseInt(document.getElementById('filterRecency').value) || 999;
+  const agentQ = document.getElementById('filterAgent').value.toLowerCase();
+
+  let results = LISTINGS.filter(l => {
+    if (status && l.status !== status) return false;
+    if (l.price < minP || l.price > maxP) return false;
+    if (daysOnMarket(l.listDate) > days) return false;
+    if (agentQ && !l.agent.toLowerCase().includes(agentQ)) return false;
+    return true;
+  });
+
+  // Sort
+  results.sort((a, b) => {
+    let av, bv;
+    if (browseSort.col === 'price') { av = a.price; bv = b.price; }
+    else if (browseSort.col === 'dom') { av = daysOnMarket(a.listDate); bv = daysOnMarket(b.listDate); }
+    else if (browseSort.col === 'agent') { av = a.agent; bv = b.agent; }
+    else if (browseSort.col === 'address') { av = a.address; bv = b.address; }
+    else { av = 0; bv = 0; }
+    if (av < bv) return -browseSort.dir;
+    if (av > bv) return browseSort.dir;
+    return 0;
+  });
+
+  document.getElementById('browseCount').textContent = results.length + ' listings';
+
+  const scored = scoreListings();
+  const scoreMap = {};
+  scored.forEach(l => scoreMap[l.mls] = l.score);
+  const planMls = new Set([...weekendPlan.sat, ...weekendPlan.sun].map(x => x.mls));
+
+  const tbody = document.getElementById('browseTable');
+  tbody.innerHTML = results.map(l => {
+    const dom = daysOnMarket(l.listDate);
+    const domClass = dom <= 14 ? 'dom-fresh' : dom <= 45 ? 'dom-mid' : 'dom-old';
+    const score = scoreMap[l.mls] || 0;
+    const maxScore = 80;
+    const pct = Math.max(0, Math.min(100, (score / maxScore) * 100));
+    const isSelected = planMls.has(l.mls);
+    return `
+      <tr>
+        <td><strong>${l.address}</strong></td>
+        <td><strong>${fmtPrice(l.price)}</strong></td>
+        <td><span class="dom-badge ${domClass}">${dom}d</span></td>
+        <td>${l.agent}</td>
+        <td><span class="status-badge status-${l.status}">${l.status}</span></td>
+        <td>
+          <div style="font-size:12px;font-weight:700;color:#2b6cb0;">${score}</div>
+          <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div></div>
+        </td>
+        <td>
+          <button class="select-btn ${isSelected ? 'selected-btn' : ''}" onclick="toggleFromBrowse('${l.mls}')">
+            ${isSelected ? '✓ Added' : '+ Add'}
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function sortBrowse(col) {
+  if (browseSort.col === col) browseSort.dir *= -1;
+  else { browseSort.col = col; browseSort.dir = 1; }
+  renderBrowse();
+}
+
+function toggleFromBrowse(mls) {
+  const listing = LISTINGS.find(l => l.mls === mls);
+  const inSat = weekendPlan.sat.find(x => x.mls === mls);
+  const inSun = weekendPlan.sun.find(x => x.mls === mls);
+  if (inSat) weekendPlan.sat = weekendPlan.sat.filter(x => x.mls !== mls);
+  else if (inSun) weekendPlan.sun = weekendPlan.sun.filter(x => x.mls !== mls);
+  else {
+    if (weekendPlan.sat.length < 2) weekendPlan.sat.push(listing);
+    else if (weekendPlan.sun.length < 2) weekendPlan.sun.push(listing);
+    else { showToast('Weekend is full (2 per day max). Remove one first.'); return; }
+  }
+  renderBrowse(); renderPlan(); renderPicks(); renderOutreachSelect(); updatePlanCount();
+}
+
+// ============================================================
+// IMPORT
+// ============================================================
+function importListings() {
+  const raw = document.getElementById('importText').value.trim();
+  if (!raw) { document.getElementById('importFeedback').textContent = 'Please paste some listing data first.'; return; }
+  const lines = raw.split('\n').filter(l => l.trim());
+  const newListings = [];
+  let errors = 0;
+  for (const line of lines) {
+    const parts = line.split(',').map(p => p.trim());
+    if (parts.length < 6) { errors++; continue; }
+    const [mls, address, agent, listDate, status, priceStr] = parts;
+    const price = parseInt(priceStr.replace(/[^0-9]/g, ''));
+    if (!mls || !address || isNaN(price)) { errors++; continue; }
+    newListings.push({ mls, address, area:'', agent, listDate, status, price });
+  }
+  if (!newListings.length) { document.getElementById('importFeedback').textContent = '⚠️ No valid listings found. Check the format.'; return; }
+  LISTINGS = newListings;
+  weekendPlan = { sat:[], sun:[] };
+  document.getElementById('inventoryBadge').textContent = LISTINGS.length + ' listings loaded';
+  document.getElementById('importFeedback').textContent = `✅ Imported ${newListings.length} listings${errors ? ` (${errors} rows skipped)` : ''}`;
+  renderPicks(); renderPlan(); renderBrowse(); renderOutreachSelect();
+  showToast(`${newListings.length} listings imported!`);
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(name) {
+  currentTab = name;
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('section-hidden'));
+  document.getElementById('tab-' + name).classList.remove('section-hidden');
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['picks','plan','outreach','browse','import'];
+    t.classList.toggle('active', tabs[i] === name);
+  });
+  if (name === 'browse') renderBrowse();
+  if (name === 'outreach') renderOutreachSelect();
+  if (name === 'plan') renderPlan();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// PDF IMPORT
+// ============================================================
+// PDF.js exposes itself as pdfjsLib when loaded from CDN
+function getPdfLib() {
+  return window.pdfjsLib || window['pdfjs-dist/build/pdf'] || null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('pdfDropZone').classList.add('dragover');
+}
+function handleDragLeave(e) {
+  document.getElementById('pdfDropZone').classList.remove('dragover');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('pdfDropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') processPDF(file);
+  else showToast('Please drop a PDF file.');
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processPDF(file);
+}
+
+async function processPDF(file) {
+  const proc = document.getElementById('pdfProcessing');
+  const succ = document.getElementById('pdfSuccess');
+  const msg  = document.getElementById('pdfProcessingMsg');
+  proc.classList.add('show');
+  succ.classList.remove('show');
+  msg.textContent = 'Reading PDF...';
+
+  try {
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    msg.textContent = `Scanning ${pdf.numPages} page(s)...`;
+
+    // Collect all text items with position data
+    const allItems = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const vp   = page.getViewport({ scale: 1 });
+      const tc   = await page.getTextContent();
+      tc.items.forEach(item => {
+        if (!item.str.trim()) return;
+        allItems.push({
+          text: item.str.trim(),
+          x: Math.round(item.transform[4]),
+          y: Math.round(vp.height - item.transform[5]),
+          page: p
+        });
+      });
+    }
+
+    // Group items into rows by page + y-coordinate (±4px threshold)
+    const rowMap = new Map();
+    allItems.forEach(item => {
+      const bucket = `${item.page}-${Math.round(item.y / 4) * 4}`;
+      if (!rowMap.has(bucket)) rowMap.set(bucket, []);
+      rowMap.get(bucket).push(item);
+    });
+
+    // Sort rows top-to-bottom, items left-to-right
+    const rows = [...rowMap.values()]
+      .map(items => items.sort((a,b) => a.x - b.x))
+      .sort((a,b) => a[0].page !== b[0].page ? a[0].page - b[0].page : a[0].y - b[0].y);
+
+    msg.textContent = 'Parsing listings...';
+
+    const listings = [];
+    const mlsPat    = /^\d{7,10}$/;
+    const datePat   = /\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/;
+    const statusPat = /\b(ACT|BMP|SSP|PEND|EXP|WDN|SOLD)\b/;
+    const pricePat  = /\$?([\d,]{4,})\s*$/;
+    const addrPat   = /\d+\s+(?:[NSEW]{1,2}\s+)?\w[\w\s]*(?:St|Ave|Dr|Rd|Ln|Blvd|Way|Ct|Ter|Loop|Pkwy|Pl|Cir|Hwy|Trl|Pt|Pass|Run|Xing)\b/i;
+    const areaPat   = /\b(1\d{2}|2\d{2}|3\d{2})\b/;
+
+    for (const row of rows) {
+      if (!mlsPat.test(row[0].text)) continue;
+      const mls     = row[0].text;
+      const full    = row.map(i => i.text).join(' ');
+
+      // Date
+      const dm = full.match(datePat);
+      let listDate = '';
+      if (dm) {
+        const [mo, dy, yr] = dm[1].split('/');
+        const y4 = yr.length === 2 ? '20' + yr : yr;
+        listDate = `${y4}-${mo.padStart(2,'0')}-${dy.padStart(2,'0')}`;
+      }
+
+      // Status
+      const sm = full.match(statusPat);
+      const status = sm ? sm[1] : 'ACT';
+
+      // Price (last number-looking thing)
+      const pm = full.match(pricePat);
+      const price = pm ? parseInt(pm[1].replace(/,/g,'')) : 0;
+
+      // Area code
+      const am = full.match(areaPat);
+      const area = am ? am[1] : '';
+
+      // Address
+      const adm = full.match(addrPat);
+      let address = adm ? adm[0].trim() : '';
+      // Fallback: second token onward until we hit a name-like pattern
+      if (!address && row.length > 1) address = row.slice(1, 4).map(i => i.text).join(' ');
+
+      // Agent: text between address end and date (rough heuristic)
+      let agent = '';
+      if (address && dm) {
+        const afterAddr  = full.indexOf(address) + address.length;
+        const beforeDate = full.indexOf(dm[0]);
+        if (beforeDate > afterAddr) {
+          agent = full.slice(afterAddr, beforeDate).replace(/\b\d+\b/g,'').trim();
+        }
+      }
+      // Clean up agent — remove area codes and stray numbers
+      agent = agent.replace(/\b\d+\b/g,'').replace(/\s{2,}/g,' ').trim();
+
+      if (mls && price > 0) {
+        listings.push({ mls, address: address || '(see PDF)', area, agent: agent || 'KW Agent', listDate: listDate || '2026-01-01', status, price });
+      }
+    }
+
+    proc.classList.remove('show');
+
+    if (!listings.length) {
+      showToast('⚠️ Could not parse listings. Try the CSV method.');
+      return;
+    }
+
+    // Apply
+    LISTINGS = listings;
+    weekendPlan = { sat:[], sun:[] };
+    document.getElementById('inventoryBadge').textContent = LISTINGS.length + ' listings loaded';
+    succ.classList.add('show');
+    succ.innerHTML = `✅ <strong>${listings.length} listings imported</strong> from ${file.name}. Inventory updated!`;
+    renderPicks(); renderPlan(); renderBrowse(); renderOutreachSelect();
+    showToast(`${listings.length} listings loaded from PDF!`);
+
+  } catch (err) {
+    proc.classList.remove('show');
+    console.error(err);
+    showToast('Error reading PDF. Try the CSV method below.');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderPicks();
+renderPlan();
+updatePlanCount();
+</script>
+</body>
+</html>
