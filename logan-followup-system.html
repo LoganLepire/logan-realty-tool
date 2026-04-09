@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logan's Client Follow-Up System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inconsolata:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f4ef;
+  --bg2: #efeae1;
+  --surface: #ffffff;
+  --border: #ddd8ce;
+  --border-dark: #c5bfb3;
+  --ink: #1e1c18;
+  --ink-mid: #6b6457;
+  --ink-light: #9e9488;
+  --gold: #b5813a;
+  --gold-light: #e8d5b0;
+  --gold-pale: #f7f0e3;
+  --green: #3a7a52;
+  --green-pale: #e8f4ed;
+  --red: #a33a3a;
+  --blue: #2c5f8a;
+  --blue-pale: #e8f0f7;
+  --tag-buyer: #2c5f8a;
+  --tag-listing: #5a3a8a;
+  --tag-showing: #3a7a52;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+}
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--ink);
+  padding: 32px 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.sidebar-brand {
+  padding: 0 24px 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 24px;
+}
+
+.sidebar-brand .monogram {
+  width: 42px; height: 42px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.sidebar-brand h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.sidebar-brand p {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 4px;
+}
+
+.nav-label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 24px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.55);
+  font-size: 13px;
+  font-weight: 400;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(181,129,58,0.08); }
+
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+.main {
+  margin-left: 260px;
+  flex: 1;
+  padding: 48px 48px 80px;
+  max-width: calc(100vw - 260px);
+}
+
+/* Page header */
+.page-header {
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-eyebrow {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.page-header h1 em { font-style: italic; }
+
+.page-header p {
+  margin-top: 10px;
+  color: var(--ink-mid);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Step indicator */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-light);
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.step.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.step.done { color: var(--green); }
+
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg2);
+  color: var(--ink-mid);
+  flex-shrink: 0;
+}
+
+.step.active .step-num { background: var(--gold); color: #fff; }
+.step.done .step-num { background: var(--green); color: #fff; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 19px;
+  font-weight: 400;
+  margin-bottom: 20px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Appointment type selector */
+.appt-types {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.appt-type-btn {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface);
+  text-align: left;
+}
+
+.appt-type-btn:hover { border-color: var(--border-dark); background: var(--bg); }
+.appt-type-btn.selected { border-color: var(--gold); background: var(--gold-pale); }
+
+.appt-type-btn .type-icon { font-size: 24px; margin-bottom: 10px; }
+.appt-type-btn .type-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.appt-type-btn .type-desc {
+  font-size: 12px;
+  color: var(--ink-mid);
+  line-height: 1.4;
+}
+
+.appt-type-btn.selected .type-name { color: var(--gold); }
+
+/* Form */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group.full { grid-column: 1 / -1; }
+
+label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+}
+
+input[type=text], input[type=email], input[type=date],
+input[type=time], input[type=url], input[type=tel], textarea, select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: 'Lato', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  padding: 11px 14px;
+  transition: border-color 0.2s;
+  outline: none;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus { border-color: var(--gold); background: #fff; }
+input::placeholder, textarea::placeholder { color: var(--ink-light); }
+
+textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+/* Toggle / Checkbox */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.toggle-row:hover { background: var(--gold-pale); border-color: var(--gold); }
+
+.toggle-switch {
+  width: 36px; height: 20px;
+  background: var(--border-dark);
+  border-radius: 10px;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-row.on .toggle-switch { background: var(--gold); }
+.toggle-row.on .toggle-switch::after { transform: translateX(16px); }
+
+.toggle-label { font-size: 14px; color: var(--ink); }
+.toggle-sub { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Inconsolata', monospace;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  text-transform: uppercase;
+}
+
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: #333; transform: translateY(-1px); }
+
+.btn-gold { background: var(--gold); color: #fff; }
+.btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-dark);
+  color: var(--ink-mid);
+}
+.btn-outline:hover { border-color: var(--ink); color: var(--ink); }
+
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { opacity: 0.88; }
+
+.btn-sm { padding: 8px 16px; font-size: 11px; }
+
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+
+/* Email output cards */
+.email-output-grid { display: flex; flex-direction: column; gap: 16px; }
+
+.email-out-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+  animation: fadeUp 0.3s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.email-out-card:nth-child(2) { animation-delay: 0.06s; }
+.email-out-card:nth-child(3) { animation-delay: 0.12s; }
+.email-out-card:nth-child(4) { animation-delay: 0.18s; }
+.email-out-card:nth-child(5) { animation-delay: 0.24s; }
+
+.eoc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.eoc-header:hover { background: var(--bg2); }
+
+.eoc-left { display: flex; align-items: center; gap: 12px; }
+
+.timing-pill {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--gold-pale);
+  color: var(--gold);
+  border: 1px solid var(--gold-light);
+  white-space: nowrap;
+}
+
+.timing-pill.green { background: var(--green-pale); color: var(--green); border-color: #b0d9c0; }
+.timing-pill.blue { background: var(--blue-pale); color: var(--blue); border-color: #b0c8e0; }
+
+.eoc-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.eoc-actions { display: flex; gap: 8px; align-items: center; }
+
+.eoc-chevron {
+  color: var(--ink-light);
+  font-size: 16px;
+  transition: transform 0.2s;
+  margin-left: 4px;
+}
+
+.email-out-card.open .eoc-chevron { transform: rotate(180deg); }
+
+.eoc-body { display: none; padding: 20px; }
+.email-out-card.open .eoc-body { display: block; }
+
+.subj-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.subj-tag {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.subj-val { font-size: 14px; color: var(--gold); font-weight: 400; }
+
+.email-text {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--ink);
+  white-space: pre-wrap;
+  font-weight: 300;
+}
+
+.email-hint {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--blue-pale);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--blue);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+
+.send-timing-note {
+  margin-top: 12px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  color: var(--ink-light);
+  display: flex; align-items: center; gap: 6px;
+}
+
+.eoc-footer {
+  display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+}
+
+/* Text draft */
+.text-draft-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+  font-weight: 300;
+  margin-bottom: 12px;
+}
+
+/* Post-meeting section */
+.checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.check-icon {
+  width: 20px; height: 20px;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.15s;
+}
+
+.check-icon.checked { background: var(--green); border-color: var(--green); color: #fff; }
+
+.check-text { flex: 1; }
+.check-label { font-weight: 400; color: var(--ink); }
+.check-sub { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
+
+/* Gmail auth section */
+.auth-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--blue-pale);
+  border: 1px solid #b0c8e0;
+  border-radius: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-banner .auth-icon { font-size: 22px; }
+.auth-banner p { font-size: 13px; color: var(--blue); line-height: 1.5; }
+.auth-banner p strong { font-weight: 700; }
+
+/* Section divider */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 32px 0;
+  color: var(--ink-light);
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.section-divider::before, .section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Tag */
+.appt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.appt-tag.buyer { background: var(--tag-buyer); }
+.appt-tag.listing { background: var(--tag-listing); }
+.appt-tag.showing { background: var(--tag-showing); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 24px 20px 60px; max-width: 100vw; }
+  .appt-types { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="monogram">L</div>
+    <h2>Client Follow-Up<br>System</h2>
+    <p>Portland Real Estate</p>
+  </div>
+  <div class="nav-label">Workflow</div>
+  <div class="nav-item active" onclick="showPage('new-appt', this)">
+    <span class="nav-icon">📋</span> New Appointment
+  </div>
+  <div class="nav-item" onclick="showPage('post-meeting', this)">
+    <span class="nav-icon">✅</span> Post-Meeting Follow-Up
+  </div>
+  <div class="nav-label" style="margin-top:24px;">Settings</div>
+  <div class="nav-item" onclick="showPage('gmail-setup', this)">
+    <span class="nav-icon">📧</span> Gmail Setup
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ===== PAGE: New Appointment ===== -->
+  <div class="page active" id="page-new-appt">
+    <div class="page-header">
+      <div class="page-eyebrow">New Appointment</div>
+      <h1>Generate Client<br><em>Communications</em></h1>
+      <p>Fill in the details below and get all your confirmation, reminder, and text draft emails ready in one click.</p>
+    </div>
+
+    <!-- Step 1: Appointment Type -->
+    <div class="card">
+      <div class="card-title">① Appointment Type</div>
+      <div class="appt-types">
+        <div class="appt-type-btn" onclick="selectType('buyer', this)">
+          <div class="type-icon">🏠</div>
+          <div class="type-name">Buyer Consultation</div>
+          <div class="type-desc">First meeting to understand needs, timeline & budget</div>
+        </div>
+        <div class="appt-type-btn" onclick="selectType('listing', this)">
+          <div class="type-icon">📝</div>
+          <div class="type-name">Listing Consultation</div>
+          <div class="type-desc">Meeting at the home to discuss pricing & selling strategy</div>
+        </div>
+        <div class="appt-type-btn" onclick="selectType('showing', this)">
+          <div class="type-icon">🗝️</div>
+          <div class="type-name">Home Showing</div>
+          <div class="type-desc">Touring a property with an interested buyer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Details -->
+    <div class="card">
+      <div class="card-title">② Appointment Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Client First Name</label>
+          <input type="text" id="clientName" placeholder="e.g. Sarah" />
+        </div>
+        <div class="form-group">
+          <label>Client Email</label>
+          <input type="email" id="clientEmail" placeholder="sarah@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Client Phone (for text draft)</label>
+          <input type="tel" id="clientPhone" placeholder="503-555-1234" />
+        </div>
+        <div class="form-group">
+          <label>Appointment Date</label>
+          <input type="date" id="apptDate" />
+        </div>
+        <div class="form-group">
+          <label>Appointment Time</label>
+          <input type="time" id="apptTime" />
+        </div>
+        <div class="form-group" id="locationGroup">
+          <label>Address / Location</label>
+          <input type="text" id="apptLocation" placeholder="123 SE Hawthorne Blvd, Portland" />
+        </div>
+        <div class="form-group full" id="meetToggleGroup" style="display:none;">
+          <div class="toggle-row" onclick="toggleMeet(this)" id="meetToggle">
+            <div class="toggle-switch"></div>
+            <div>
+              <div class="toggle-label">📹 This is a virtual meeting (Google Meet)</div>
+              <div class="toggle-sub">Toggle on to include a meeting link & joining instructions</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group full" id="meetLinkGroup" style="display:none;">
+          <label>Google Meet Link</label>
+          <input type="url" id="meetLink" placeholder="https://meet.google.com/xxx-xxxx-xxx" />
+        </div>
+        <div class="form-group full">
+          <label>Quick Notes (optional — personalizes the emails)</label>
+          <textarea id="apptNotes" placeholder="e.g. They're looking in SE Portland, budget around $450k, want to be in before school year..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gold" id="generateBtn" onclick="generateAll()">✦ Schedule & Send All</button>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div id="outputSection" style="display:none;">
+      <div class="section-divider">Generated Communications</div>
+      <div id="emailOutputGrid" class="email-output-grid"></div>
+
+      <div class="section-divider">Text Message Draft</div>
+      <div class="card">
+        <div class="card-title">📱 Text Reminders</div>
+        <p style="font-size:13px; color:var(--ink-mid); margin-bottom:20px; line-height:1.6;">Copy these drafts to send manually or through your business texting app. Texts are intentionally short and friendly.</p>
+        <div id="textDraftsOutput"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: Post-Meeting Follow-Up ===== -->
+  <div class="page" id="page-post-meeting">
+    <div class="page-header">
+      <div class="page-eyebrow">After the Appointment</div>
+      <h1>Post-Meeting<br><em>Follow-Up Builder</em></h1>
+      <p>Personalize your follow-up email and check off the next steps for your client — keeps your business running like clockwork.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Appointment Type & Client</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Client First Name</label>
+          <input type="text" id="pm-name" placeholder="Sarah" />
+        </div>
+        <div class="form-group">
+          <label>Appointment Type</label>
+          <select id="pm-type">
+            <option value="buyer">Buyer Consultation</option>
+            <option value="listing">Listing Consultation</option>
+            <option value="showing">Home Showing</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>What did you discuss? (Add personal notes — these go in the email)</label>
+          <textarea id="pm-notes" placeholder="e.g. We talked about their timeline of 3-4 months, they loved the SE neighborhood feel, concerned about school districts. Pre-approval is their next step..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="pm-checklist-section" style="display:none;">
+      <div class="section-divider">Next Steps Checklist</div>
+      <div class="card">
+        <div class="card-title" id="pm-checklist-title">Next Steps</div>
+        <ul class="checklist" id="pm-checklist"></ul>
+      </div>
+
+      <div class="section-divider">Follow-Up Email Draft</div>
+      <div class="card">
+        <div class="card-title">📧 Post-Meeting Email</div>
+        <div class="email-out-card open" style="border:none; padding:0; margin:0; background:transparent; box-shadow:none;">
+          <div class="eoc-body" style="display:block; padding:0;">
+            <div class="subj-row">
+              <div class="subj-tag">Subject</div>
+              <div class="subj-val" id="pm-subject"></div>
+            </div>
+            <div class="email-text" id="pm-email-body"></div>
+            <div class="email-hint">
+              <span>💡</span>
+              <span>This draft is based on your notes above — review it, edit anything that doesn't fit, then paste into Gmail.</span>
+            </div>
+            <div class="eoc-footer">
+              <button class="btn btn-outline btn-sm" onclick="copyPostEmail()">Copy Email</button>
+              <button class="btn btn-sm" style="background:var(--green); color:#fff;" onclick="openGmailPost()">Open in Gmail Draft</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:0;">
+      <button class="btn btn-gold" onclick="generatePostMeeting()">✦ Build Follow-Up</button>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: Gmail Setup ===== -->
+  <div class="page" id="page-gmail-setup">
+    <div class="page-header">
+      <div class="page-eyebrow">Settings</div>
+      <h1>Gmail<br><em>Integration</em></h1>
+      <p>Connect your Gmail so this tool can create drafts directly in your inbox — one click to review and send.</p>
+    </div>
+
+    <div class="auth-banner">
+      <div class="auth-icon">🔒</div>
+      <p><strong>How it works:</strong> This tool creates Gmail <em>drafts</em> — not sends. You always review before anything goes out. No emails leave without your eyes on them first.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Connect Gmail Account</div>
+      <p style="font-size:14px; color:var(--ink-mid); line-height:1.7; margin-bottom:24px;">
+        To enable automatic Gmail draft creation, this tool uses the Gmail API via Google OAuth. Here's how to set it up in a few minutes:
+      </p>
+      <ol style="font-size:14px; color:var(--ink-mid); line-height:2; padding-left:20px; margin-bottom:28px;">
+        <li>Go to <strong style="color:var(--ink);">console.cloud.google.com</strong> and create a free project</li>
+        <li>Enable the <strong style="color:var(--ink);">Gmail API</strong></li>
+        <li>Create OAuth 2.0 credentials (Desktop App type)</li>
+        <li>Paste your Client ID below</li>
+      </ol>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Google OAuth Client ID</label>
+          <input type="text" id="gmailClientId" placeholder="xxxxx.apps.googleusercontent.com" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="connectGmail()">Connect Gmail →</button>
+      </div>
+      <p style="margin-top:20px; font-size:12px; color:var(--ink-light); line-height:1.6;">
+        Not technical? No problem — the tool still works perfectly without Gmail integration. Just use the "Copy Email" buttons and paste into Gmail manually.
+      </p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ---- State ----
+let selectedType = null;
+let isMeetOn = false;
+
+const TYPES = {
+  buyer: { label: 'Buyer Consultation', icon: '🏠', tag: 'buyer', inPerson: false },
+  listing: { label: 'Listing Consultation', icon: '📝', tag: 'listing', inPerson: true },
+  showing: { label: 'Home Showing', icon: '🗝️', tag: 'showing', inPerson: true }
+};
+
+// ---- Navigation ----
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ---- Appointment Type ----
+function selectType(type, el) {
+  selectedType = type;
+  document.querySelectorAll('.appt-type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const inPerson = TYPES[type].inPerson;
+  document.getElementById('meetToggleGroup').style.display = 'flex';
+
+  if (inPerson) {
+    document.getElementById('locationGroup').style.display = 'flex';
+    // Reset meet toggle for in-person
+    const toggle = document.getElementById('meetToggle');
+    toggle.classList.remove('on');
+    isMeetOn = false;
+    document.getElementById('meetLinkGroup').style.display = 'none';
+  } else {
+    // Buyer consult — default show meet toggle on
+    document.getElementById('locationGroup').style.display = 'none';
+    const toggle = document.getElementById('meetToggle');
+    toggle.classList.add('on');
+    isMeetOn = true;
+    document.getElementById('meetLinkGroup').style.display = 'flex';
+  }
+}
+
+function toggleMeet(el) {
+  el.classList.toggle('on');
+  isMeetOn = el.classList.contains('on');
+  document.getElementById('meetLinkGroup').style.display = isMeetOn ? 'flex' : 'none';
+}
+
+// ---- Helpers ----
+function fmtDate(d) {
+  if (!d) return '[Date TBD]';
+  const [y, m, day] = d.split('-');
+  return new Date(y, m-1, day).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+function fmtTime(t) {
+  if (!t) return '[Time TBD]';
+  const [h, m] = t.split(':');
+  const hr = parseInt(h); const ampm = hr >= 12 ? 'PM' : 'AM';
+  return `${hr % 12 === 0 ? 12 : hr % 12}:${m} ${ampm} PST`;
+}
+
+
+
+function openGmailDraft(subject, body) {
+  const url = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(url, '_blank');
+}
+
+// ---- HTML Email Builder ----
+function buildHtml(bodyHtml) {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:32px 0;">
+<tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e0dbd2;">
+  <tr><td style="background:#1e1c18;padding:24px 40px;text-align:center;">
+    <p style="margin:0;font-family:Georgia,serif;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;color:#b5813a;">Sadle Real Estate · Portland</p>
+  </td></tr>
+  <tr><td style="padding:36px 40px 28px;">
+    ${bodyHtml}
+  </td></tr>
+  <tr><td style="background:#f4f1ec;border-top:1px solid #e0dbd2;padding:20px 40px;">
+    <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#9e9488;font-family:Arial,sans-serif;line-height:1.6;">This is an automated message from Logan Lepire's scheduling system. To reach Logan directly, reply to <a href="mailto:logan@sadlerealestate.com" style="color:#b5813a;">logan@sadlerealestate.com</a>.</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function detailsBlock(items) {
+  return `<table cellpadding="0" cellspacing="0" style="background:#f7f4ef;border:1px solid #e0dbd2;border-radius:6px;padding:16px 20px;margin:20px 0;width:100%;">
+    ${items.map(([icon, label, val]) => `<tr><td style="padding:5px 0;font-family:Arial,sans-serif;font-size:14px;color:#6b6457;">${icon} <strong style="color:#1e1c18;">${label}:</strong> ${val}</td></tr>`).join('')}
+  </table>`;
+}
+
+function meetBlock(meetLink) {
+  return `<table cellpadding="0" cellspacing="0" style="background:#e8f0f7;border:1px solid #b0c8e0;border-radius:6px;padding:16px 20px;margin:20px 0;width:100%;">
+    <tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#2c5f8a;padding-bottom:10px;"><strong>📹 How to join your Google Meet:</strong></td></tr>
+    <tr><td style="font-family:Arial,sans-serif;font-size:13px;color:#2c5f8a;line-height:1.8;">
+      1. Click the link below at our meeting time<br>
+      2. Allow camera &amp; mic access when prompted<br>
+      3. No downloads needed — works in your browser
+    </td></tr>
+    <tr><td style="padding-top:14px;"><a href="${meetLink}" style="background:#2c5f8a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:5px;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;display:inline-block;">Join Google Meet →</a></td></tr>
+  </table>`;
+}
+
+function p(text) {
+  return `<p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:15px;color:#1e1c18;line-height:1.7;">${text}</p>`;
+}
+
+function greeting(name) {
+  return `<p style="margin:0 0 16px;font-family:Georgia,serif;font-size:17px;color:#1e1c18;">Hi ${name},</p>`;
+}
+
+function sign() {
+  return `<p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:15px;color:#1e1c18;line-height:1.7;">See you soon!<br><br><strong>Logan Lepire</strong><br><span style="color:#6b6457;">Sadle Real Estate</span></p>`;
+}
+
+// ---- Email template presets ----
+function getEmails(type, name, dateStr, timeStr, location, meetLink, notes) {
+  const date = fmtDate(dateStr);
+  const time = fmtTime(timeStr);
+  const notesHtml = notes ? `<table cellpadding="0" cellspacing="0" style="background:#f7f0e3;border-left:3px solid #b5813a;border-radius:0 6px 6px 0;padding:14px 18px;margin:20px 0;width:100%;"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#6b6457;font-style:italic;">${notes}</td></tr></table>` : '';
+
+  const locationItems = isMeetOn && meetLink
+    ? [['📅', 'Date', date], ['🕐', 'Time', time]]
+    : location
+    ? [['📅', 'Date', date], ['🕐', 'Time', time], ['📍', 'Location', location]]
+    : [['📅', 'Date', date], ['🕐', 'Time', time]];
+
+  if (type === 'buyer') {
+    const confirmHtml = buildHtml(
+      greeting(name) +
+      p("I'm really looking forward to meeting with you! Your buyer consultation is officially confirmed.") +
+      detailsBlock(locationItems) +
+      (isMeetOn && meetLink ? meetBlock(meetLink) : '') +
+      notesHtml +
+      p("This will be a great chance for us to talk through what you're looking for, your timeline, and answer any questions you have about the buying process here in Portland. Come with anything on your mind — no question is too small.") +
+      p("If you need to reschedule or anything comes up, just reply to this email and we'll make it work.") +
+      sign()
+    );
+
+    const remind24Html = buildHtml(
+      greeting(name) +
+      p("Just a friendly heads-up — we're meeting tomorrow!") +
+      detailsBlock(locationItems) +
+      (isMeetOn && meetLink ? meetBlock(meetLink) : '') +
+      p("If you've thought of any questions since we booked, now's a great time to jot them down. I'm also happy to send over any resources beforehand if that would be helpful.") +
+      p("Otherwise, I'll see you tomorrow!") +
+      sign()
+    );
+
+    const remind1Html = buildHtml(
+      greeting(name) +
+      p("Quick reminder — we're connecting in about an hour!") +
+      detailsBlock([['🕐', 'Time', time + ' today'], ...(isMeetOn && meetLink ? [] : location ? [['📍', 'Location', location]] : [])]) +
+      (isMeetOn && meetLink ? meetBlock(meetLink) : '') +
+      p("If anything has come up, just shoot me a quick reply. Otherwise I'll see you soon — looking forward to it!") +
+      sign()
+    );
+
+    return [
+      { timing: 'Send Now', timingClass: '', title: 'Booking Confirmation', subject: `You're all set — Buyer Consultation Confirmed`, sendWhen: 'Sends immediately after booking', body: confirmHtml },
+      { timing: '24 hrs before', timingClass: '', title: '24-Hour Reminder', subject: `Reminder: Your buyer consultation is tomorrow`, sendWhen: 'Sends 24 hours before appointment', body: remind24Html },
+      { timing: '1 hr before', timingClass: 'green', title: '1-Hour Reminder', subject: `We're on in an hour — here's your link`, sendWhen: 'Sends 1 hour before appointment', body: remind1Html }
+    ];
+  }
+
+  if (type === 'listing') {
+    const locItems = [['📅', 'Date', date], ['🕐', 'Time', time], ['📍', 'Location', location || 'Your home']];
+
+    const confirmHtml = buildHtml(
+      greeting(name) +
+      p("I'm excited to meet with you and take a look at the home! Your listing consultation is confirmed.") +
+      detailsBlock(locItems) +
+      notesHtml +
+      p("I'll walk through the property, share my thoughts on pricing and positioning, and we'll talk through what a sale could look like for you. Feel free to have any questions ready — I want to make sure you leave with total clarity.") +
+      p("If anything changes, just let me know. Looking forward to it!") +
+      sign()
+    );
+
+    const remind24Html = buildHtml(
+      greeting(name) +
+      p("Just a reminder that we're meeting tomorrow to walk through the home!") +
+      detailsBlock(locItems) +
+      p("I'll bring my market analysis for your area and we'll go over everything. If you want to have any documents ready (past utility bills, HOA info, etc.) feel free — but it's totally not required.") +
+      p("See you tomorrow!") +
+      sign()
+    );
+
+    const remind1Html = buildHtml(
+      greeting(name) +
+      p("Just a quick heads-up — I'll be there in about an hour!") +
+      detailsBlock([['🕐', 'Time', time + ' today'], ['📍', 'Location', location || 'Your home']]) +
+      p("Looking forward to seeing the place and connecting with you. See you soon!") +
+      sign()
+    );
+
+    return [
+      { timing: 'Send Now', timingClass: '', title: 'Booking Confirmation', subject: `Your listing consultation is confirmed`, sendWhen: 'Sends immediately after booking', body: confirmHtml },
+      { timing: '24 hrs before', timingClass: '', title: '24-Hour Reminder', subject: `Reminder: Listing consultation tomorrow`, sendWhen: 'Sends 24 hours before appointment', body: remind24Html },
+      { timing: '1 hr before', timingClass: 'green', title: '1-Hour Reminder', subject: `See you in an hour — listing consultation`, sendWhen: 'Sends 1 hour before appointment', body: remind1Html }
+    ];
+  }
+
+  if (type === 'showing') {
+    const locItems = [['📅', 'Date', date], ['🕐', 'Time', time], ['📍', 'Address', location || '[Property Address]']];
+
+    const confirmHtml = buildHtml(
+      greeting(name) +
+      p("Great — your showing is all set! I'm looking forward to walking through this home with you.") +
+      detailsBlock(locItems) +
+      notesHtml +
+      `<table cellpadding="0" cellspacing="0" style="background:#f7f4ef;border:1px solid #e0dbd2;border-radius:6px;padding:16px 20px;margin:20px 0;width:100%;"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#1e1c18;padding-bottom:6px;"><strong>A couple things to keep in mind:</strong></td></tr><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#6b6457;line-height:1.9;">• Plan to spend about 30–45 minutes at the property<br>• Take your time in each room — feel free to open closets, check storage, etc.<br>• I'll be there to answer any questions as we go</td></tr></table>` +
+      p("If you have any questions before we meet, don't hesitate to reach out. See you there!") +
+      sign()
+    );
+
+    const remind24Html = buildHtml(
+      greeting(name) +
+      p("Just a reminder — we're touring the home tomorrow!") +
+      detailsBlock(locItems) +
+      p("I'm looking forward to seeing it with you. If you have questions or want to talk through anything before we go, feel free to call or text me.") +
+      p("See you tomorrow!") +
+      sign()
+    );
+
+    const remind1Html = buildHtml(
+      greeting(name) +
+      p("Just a quick heads-up — the showing is in about an hour!") +
+      detailsBlock([['🕐', 'Time', time + ' today'], ['📍', 'Address', location || '[Property Address]']]) +
+      p("I'll meet you there. See you soon!") +
+      sign()
+    );
+
+    return [
+      { timing: 'Send Now', timingClass: '', title: 'Showing Confirmation', subject: `Your home showing is confirmed — details inside`, sendWhen: 'Sends immediately after booking', body: confirmHtml },
+      { timing: '24 hrs before', timingClass: '', title: '24-Hour Reminder', subject: `Reminder: Home showing tomorrow`, sendWhen: 'Sends 24 hours before appointment', body: remind24Html },
+      { timing: '1 hr before', timingClass: 'green', title: '1-Hour Reminder', subject: `See you in an hour — home showing`, sendWhen: 'Sends 1 hour before appointment', body: remind1Html }
+    ];
+  }
+}
+
+function getTextDrafts(type, name, dateStr, timeStr, location, meetLink) {
+  const date = fmtDate(dateStr);
+  const time = fmtTime(timeStr);
+
+  const drafts = [
+    {
+      label: '24-hr text reminder',
+      text: type === 'buyer'
+        ? `Hey ${name}! Just a reminder we have your buyer consultation tomorrow at ${time}. ${isMeetOn && meetLink ? `Here's the Google Meet link: ${meetLink}` : ''} Looking forward to it! – Logan`
+        : type === 'listing'
+        ? `Hey ${name}! Just reminding you I'll be coming by tomorrow at ${time} for the listing consultation. ${location ? `Address: ${location}` : ''} See you then! – Logan`
+        : `Hey ${name}! Reminder that we're touring the home tomorrow at ${time}. ${location ? `Address: ${location}` : ''} See you there! – Logan`
+    },
+    {
+      label: '1-hr text reminder',
+      text: type === 'buyer'
+        ? `Hi ${name}! We're on in about an hour at ${time}. ${isMeetOn && meetLink ? `Meet link: ${meetLink}` : ''} See you soon! – Logan`
+        : `Hi ${name}! We're meeting in about an hour at ${time}. ${location || ''} See you soon! – Logan`
+    }
+  ];
+  return drafts;
+}
+
+// ---- Make.com Webhook ----
+const MAKE_WEBHOOK = 'https://hook.us2.make.com/07p15tmnvugos4rm7n54iw93552wxbi3';
+
+function getScheduledTimes(dateStr, timeStr) {
+  // Build ISO timestamps for each send time based on appointment date/time
+  if (!dateStr || !timeStr) return {};
+  const apptMs = new Date(`${dateStr}T${timeStr}`).getTime();
+  const toISO = (ms) => new Date(ms).toISOString();
+  return {
+    confirmation: toISO(Date.now()), // send immediately
+    reminder_24h: toISO(apptMs - 24 * 60 * 60 * 1000),
+    reminder_1h:  toISO(apptMs - 60 * 60 * 1000),
+    text_24h:     toISO(apptMs - 24 * 60 * 60 * 1000),
+    text_1h:      toISO(apptMs - 60 * 60 * 1000),
+  };
+}
+
+// ---- Generate ----
+async function generateAll() {
+  if (!selectedType) { alert('Please select an appointment type first.'); return; }
+  const name = document.getElementById('clientName').value.trim() || '[Client]';
+  const email = document.getElementById('clientEmail').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  const dateStr = document.getElementById('apptDate').value;
+  const timeStr = document.getElementById('apptTime').value;
+  const location = document.getElementById('apptLocation').value.trim();
+  const meetLink = document.getElementById('meetLink').value.trim();
+  const notes = document.getElementById('apptNotes').value.trim();
+
+  if (!email) { alert('Please enter a client email address.'); return; }
+  if (!dateStr || !timeStr) { alert('Please enter the appointment date and time.'); return; }
+
+  const emails = getEmails(selectedType, name, dateStr, timeStr, location, meetLink, notes);
+  const texts = getTextDrafts(selectedType, name, dateStr, timeStr, location, meetLink);
+  const schedule = getScheduledTimes(dateStr, timeStr);
+
+  // Build payload for Make
+  const payload = {
+    appointment_type: selectedType,
+    client: { name, email, phone },
+    appointment: {
+      date: dateStr,
+      time: timeStr,
+      location: location || null,
+      meet_link: meetLink || null,
+      notes: notes || null,
+      is_virtual: isMeetOn
+    },
+    from_email: 'Appointments.LoganLepire@gmail.com',
+    emails: {
+      confirmation: {
+        send_at: schedule.confirmation,
+        to: email,
+        subject: emails[0].subject,
+        body: emails[0].body
+      },
+      reminder_24h: {
+        send_at: schedule.reminder_24h,
+        to: email,
+        subject: emails[1].subject,
+        body: emails[1].body
+      },
+      reminder_1h: {
+        send_at: schedule.reminder_1h,
+        to: email,
+        subject: emails[2].subject,
+        body: emails[2].body
+      }
+    },
+    texts: {
+      reminder_24h: {
+        send_at: schedule.text_24h,
+        to: phone,
+        body: texts[0].text
+      },
+      reminder_1h: {
+        send_at: schedule.text_1h,
+        to: phone,
+        body: texts[1].text
+      }
+    }
+  };
+
+  // Show loading state
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = '⏳ Scheduling...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(MAKE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      btn.textContent = '✓ Scheduled!';
+      btn.style.background = 'var(--green)';
+      showSuccessBanner(name, email, schedule);
+    } else {
+      throw new Error('Webhook failed');
+    }
+  } catch (e) {
+    btn.textContent = '⚠ Webhook error — see previews below';
+    btn.style.background = 'var(--red)';
+    btn.disabled = false;
+  }
+
+  // Always show email previews regardless of webhook status
+  renderEmailPreviews(emails, texts);
+
+  setTimeout(() => {
+    btn.textContent = '✦ Schedule & Send All';
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 4000);
+}
+
+function showSuccessBanner(name, email, schedule) {
+  const existing = document.getElementById('successBanner');
+  if (existing) existing.remove();
+
+  const fmt = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  };
+
+  const banner = document.createElement('div');
+  banner.id = 'successBanner';
+  banner.style.cssText = `
+    background: var(--green-pale); border: 1px solid #b0d9c0; border-radius: 10px;
+    padding: 20px 24px; margin-bottom: 24px; animation: fadeUp 0.3s ease both;
+  `;
+  banner.innerHTML = `
+    <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--green);margin-bottom:12px;">✓ All communications scheduled for ${name}</div>
+    <div style="font-size:13px;color:var(--ink-mid);line-height:2;">
+      <div>📧 Confirmation → <strong style="color:var(--ink);">${email}</strong> — sending now</div>
+      <div>📧 24hr reminder → ${fmt(schedule.reminder_24h)}</div>
+      <div>📧 1hr reminder → ${fmt(schedule.reminder_1h)}</div>
+      <div style="margin-top:6px;padding-top:10px;border-top:1px solid #b0d9c0;">📱 Text drafts are in the preview below — copy & send from your phone when the time comes</div>
+    </div>
+  `;
+  document.getElementById('outputSection').prepend(banner);
+}
+
+function renderEmailPreviews(emails, texts) {
+  const grid = document.getElementById('emailOutputGrid');
+  grid.innerHTML = '';
+
+  emails.forEach((email, i) => {
+    const card = document.createElement('div');
+    card.className = 'email-out-card' + (i === 0 ? ' open' : '');
+    card.innerHTML = `
+      <div class="eoc-header" onclick="toggleCard(this)">
+        <div class="eoc-left">
+          <span class="timing-pill ${email.timingClass}">${email.timing}</span>
+          <span class="eoc-title">${email.title}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'Inconsolata',monospace;font-size:10px;color:var(--green);letter-spacing:.08em;">AUTO-SCHEDULED</span>
+          <span class="eoc-chevron">⌄</span>
+        </div>
+      </div>
+      <div class="eoc-body">
+        <div class="subj-row">
+          <div class="subj-tag">Subject</div>
+          <div class="subj-val">${email.subject}</div>
+        </div>
+        <div class="email-text">${email.body}</div>
+        <div class="send-timing-note">📌 ${email.sendWhen}</div>
+        <div class="eoc-footer">
+          <button class="btn btn-outline btn-sm" onclick="copyEmailText(this, \`Subject: ${email.subject.replace(/`/g,"'")}\n\n${email.body.replace(/`/g,"'")}\`)">Copy Email</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  const textOut = document.getElementById('textDraftsOutput');
+  textOut.innerHTML = '';
+  texts.forEach(t => {
+    const wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '16px';
+    wrapper.innerHTML = `
+      <div style="font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:8px;">${t.label}</div>
+      <div class="text-draft-box">${t.text}</div>
+      <button class="btn btn-outline btn-sm" onclick="copyEmailText(this, \`${t.text.replace(/`/g,"'")}\`)">Copy Text</button>
+    `;
+    textOut.appendChild(wrapper);
+  });
+
+  document.getElementById('outputSection').style.display = 'block';
+  document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyEmailText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+
+function toggleCard(header) {
+  header.closest('.email-out-card').classList.toggle('open');
+}
+
+// ---- Post-Meeting ----
+const CHECKLISTS = {
+  buyer: [
+    { label: 'Send pre-approval referral', sub: 'If they haven\'t started yet — connect them with a lender you trust' },
+    { label: 'Set up MLS search alerts', sub: 'Customize to their criteria and send the portal link' },
+    { label: 'Send neighborhood guides', sub: 'For areas they mentioned liking — school districts, walkability, etc.' },
+    { label: 'Schedule next touchpoint', sub: 'A call or showing in the next 1–2 weeks to keep momentum' },
+    { label: 'Log contact in your CRM', sub: 'Add notes on their timeline, budget, must-haves' },
+    { label: 'Connect on social', sub: 'LinkedIn or Instagram — helps them remember you as their agent' }
+  ],
+  listing: [
+    { label: 'Send CMA report', sub: 'Formal comparative market analysis with your recommended list price' },
+    { label: 'Draft listing agreement', sub: 'Send for review / signature once they\'re ready to proceed' },
+    { label: 'Recommend a stager or photographer', sub: 'Have your preferred vendors\' info ready to share' },
+    { label: 'Create pre-listing checklist for seller', sub: 'Small repairs, declutter tips, curb appeal — helps them prepare' },
+    { label: 'Set a target list date', sub: 'Work backward from their timeline to plan photography + launch' },
+    { label: 'Log in CRM with property details', sub: 'Sq ft, bedrooms, motivations, ideal timeline' }
+  ],
+  showing: [
+    { label: 'Note their feedback on the property', sub: 'Liked / didn\'t like — refines future search and shows you\'re listening' },
+    { label: 'Check on offer interest', sub: 'Gauge if they want to move forward or keep looking' },
+    { label: 'Pull comps if they\'re interested', sub: 'Support a strong offer price with recent sales data' },
+    { label: 'Schedule next showing if needed', sub: 'Have 2–3 backup properties ready to suggest' },
+    { label: 'Update their MLS search if criteria shifted', sub: 'Adjust based on what they reacted to today' },
+    { label: 'Log showing notes in your CRM', sub: 'Date, address, client reaction, next step' }
+  ]
+};
+
+const POST_SUBJECTS = {
+  buyer: (name) => `Great meeting you, ${name} — here's what's next`,
+  listing: (name) => `Thank you, ${name} — next steps for your listing`,
+  showing: (name) => `Thanks for touring today, ${name} — here's what\'s next`
+};
+
+function postEmailBody(type, name, notes) {
+  const notesSection = notes
+    ? `Based on what we discussed:\n${notes}\n\n`
+    : '';
+
+  if (type === 'buyer') return `Hi ${name},
+
+It was so great meeting with you today! I really enjoyed getting to know more about what you're looking for and learning about your goals.
+
+${notesSection}Here are your next steps:
+
+[NEXT STEPS — see checklist below and personalize this section]
+
+I'm here every step of the way. Don't hesitate to reach out with any questions — no matter how small. Finding the right home is a big deal and I want to make sure you feel supported through the whole process.
+
+Talk soon!`;
+
+  if (type === 'listing') return `Hi ${name},
+
+Thank you so much for your time today — I really enjoyed walking through the home and hearing your goals.
+
+${notesSection}I'll be following up shortly with:
+
+[NEXT STEPS — e.g., the CMA report, listing agreement, photography scheduling]
+
+I'm excited about the opportunity to help you sell your home and get you the best possible outcome. Feel free to reach out anytime with questions.
+
+Looking forward to working together!`;
+
+  if (type === 'showing') return `Hi ${name},
+
+It was great touring the home with you today! ${notes ? `I took note of your feedback — ${notes}` : 'I hope it gave you a better feel for what you\'re looking for.'}
+
+[Add your personal take on the property and next steps — e.g., whether to make an offer, schedule another showing, etc.]
+
+I'm here whenever you're ready to take the next step or if you have any questions. Let me know what you're thinking!`;
+}
+
+let pmEmailData = {};
+
+function generatePostMeeting() {
+  const name = document.getElementById('pm-name').value.trim() || '[Client]';
+  const type = document.getElementById('pm-type').value;
+  const notes = document.getElementById('pm-notes').value.trim();
+
+  const subject = POST_SUBJECTS[type](name);
+  const body = postEmailBody(type, name, notes);
+
+  pmEmailData = { subject, body };
+
+  document.getElementById('pm-subject').textContent = subject;
+  document.getElementById('pm-email-body').textContent = body;
+
+  // Checklist
+  const list = document.getElementById('pm-checklist');
+  list.innerHTML = '';
+  CHECKLISTS[type].forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'checklist-item';
+    li.innerHTML = `
+      <div class="check-icon" onclick="toggleCheck(this)">✓</div>
+      <div class="check-text">
+        <div class="check-label">${item.label}</div>
+        <div class="check-sub">${item.sub}</div>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+
+  document.getElementById('pm-checklist-title').textContent = `Next Steps — ${TYPES[type].label}`;
+  document.getElementById('pm-checklist-section').style.display = 'block';
+  document.getElementById('pm-checklist-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleCheck(el) { el.classList.toggle('checked'); }
+
+function copyPostEmail() {
+  const text = `Subject: ${pmEmailData.subject}\n\n${pmEmailData.body}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy Email', 2000);
+  });
+}
+
+function openGmailPost() {
+  openGmailDraft(pmEmailData.subject, pmEmailData.body);
+}
+
+function connectGmail() {
+  alert('Gmail OAuth setup coming in a future version. For now, use the "Open Gmail Draft" buttons — they open Gmail with the email pre-filled and ready to send!');
+}
+</script>
+</body>
+</html>
