@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logan Lepire — Agent Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inconsolata:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ec;
+  --bg2: #ede8df;
+  --surface: #ffffff;
+  --border: #ddd8ce;
+  --border-dark: #c5bfb3;
+  --ink: #1a1814;
+  --ink-mid: #6b6457;
+  --ink-light: #9e9488;
+  --gold: #b5813a;
+  --gold-light: #e8d5b0;
+  --gold-pale: #f7f0e3;
+  --green: #3a7a52;
+  --green-pale: #e8f4ed;
+  --blue: #2c5f8a;
+  --blue-pale: #e8f0f7;
+  --red: #a33a3a;
+  --red-pale: #f7e8e8;
+  --sidebar-w: 240px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: 'Lato', sans-serif; font-weight: 300; min-height: 100vh; display: flex; }
+
+/* Sidebar */
+.sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--ink); position: fixed; top: 0; left: 0; bottom: 0; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+.sidebar-top { padding: 28px 22px 22px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.monogram { width: 42px; height: 42px; border: 1px solid var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold); margin-bottom: 12px; }
+.sidebar-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; color: #fff; line-height: 1.2; }
+.sidebar-role { font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-top: 4px; }
+.nav-section { padding: 16px 0 4px; }
+.nav-label { font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.2); padding: 0 22px; margin-bottom: 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 22px; color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; text-decoration: none; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(181,129,58,0.08); }
+.nav-item.disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+.nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+.coming-tag { font-family: 'Inconsolata', monospace; font-size: 9px; text-transform: uppercase; color: var(--ink-light); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 3px; margin-left: auto; }
+.sidebar-bottom { margin-top: auto; padding: 16px 22px; border-top: 1px solid rgba(255,255,255,0.07); }
+.sidebar-date { font-family: 'Inconsolata', monospace; font-size: 11px; color: rgba(255,255,255,0.22); line-height: 1.8; }
+
+/* Main */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+.page { display: none; flex-direction: column; flex: 1; }
+.page.active { display: flex; }
+
+/* Page header */
+.page-header { padding: 24px 36px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; }
+.page-eyebrow { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+.page-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--ink); line-height: 1.1; }
+.page-title em { font-style: italic; color: var(--gold); }
+
+/* Tab switcher */
+.tab-switcher { display: flex; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; }
+.tab-btn { font-family: 'Inconsolata', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 18px; border-radius: 6px; border: none; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+/* Stats bar */
+.stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border-bottom: 1px solid var(--border); }
+.stat-item { padding: 12px 20px; border-right: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.stat-item:last-child { border-right: none; }
+.stat-icon { font-size: 16px; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gold-pale); }
+.stat-icon.blue { background: var(--blue-pale); }
+.stat-icon.green { background: var(--green-pale); }
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--ink); line-height: 1; }
+.stat-lbl { font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); margin-top: 2px; }
+
+/* Page body */
+.page-body { padding: 24px 36px; flex: 1; overflow-y: auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Daily grid */
+.daily-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; animation: fadeUp 0.35s ease both; }
+.card:nth-child(2) { animation-delay: 0.06s; }
+.card:nth-child(3) { animation-delay: 0.12s; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+.card-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 400; color: var(--ink); }
+.card-action { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); text-decoration: none; }
+.card-action:hover { opacity: 0.7; }
+.card-body { padding: 14px 16px; }
+
+/* Events */
+.event-list { display: flex; flex-direction: column; gap: 8px; }
+.event-item { display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border-left: 3px solid var(--gold); }
+.event-item.blue { border-left-color: var(--blue); }
+.event-item.green { border-left-color: var(--green); }
+.event-item.red { border-left-color: var(--red); }
+.event-time { font-family: 'Inconsolata', monospace; font-size: 11px; color: var(--ink-mid); white-space: nowrap; padding-top: 1px; min-width: 44px; }
+.event-title { font-size: 13px; font-weight: 400; color: var(--ink); margin-bottom: 2px; }
+.event-sub { font-size: 11px; color: var(--ink-light); }
+
+/* Tasks */
+.task-list { display: flex; flex-direction: column; gap: 6px; }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 8px; background: var(--bg); cursor: pointer; transition: background 0.15s; }
+.task-item:hover { background: var(--green-pale); }
+.task-item.done { opacity: 0.4; }
+.task-item.done .task-title { text-decoration: line-through; }
+.task-check { width: 17px; height: 17px; border: 1.5px solid var(--border-dark); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; margin-top: 1px; transition: all 0.15s; }
+.task-item.done .task-check { background: var(--green); border-color: var(--green); color: #fff; }
+.task-title { font-size: 13px; color: var(--ink); font-weight: 400; line-height: 1.4; }
+.task-add { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.task-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-family: 'Lato', sans-serif; font-size: 13px; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.task-input:focus { border-color: var(--gold); }
+.task-add-btn { background: var(--gold); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; }
+.task-add-btn:hover { opacity: 0.85; }
+
+/* Email placeholder */
+.email-ph { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 28px 20px; }
+.email-ph-icon { font-size: 28px; margin-bottom: 10px; }
+.email-ph-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--ink); margin-bottom: 6px; }
+.email-ph-desc { font-size: 12px; color: var(--ink-mid); line-height: 1.7; margin-bottom: 16px; }
+.btn-gold { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: var(--gold); color: #fff; border-radius: 7px; font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; border: none; cursor: pointer; transition: opacity 0.15s; }
+.btn-gold:hover { opacity: 0.85; }
+
+/* Weekly */
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.week-day { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.week-day.today { border-color: var(--gold); }
+.week-day-head { padding: 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.week-day.today .week-day-head { background: var(--gold); }
+.week-day-name { font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 2px; }
+.week-day.today .week-day-name, .week-day.today .week-day-num { color: #fff; }
+.week-day-num { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--ink); line-height: 1; }
+.week-day-events { padding: 8px; display: flex; flex-direction: column; gap: 5px; min-height: 70px; }
+.week-evt { padding: 5px 7px; border-radius: 5px; background: var(--gold-pale); border-left: 2px solid var(--gold); font-size: 11px; color: var(--ink); line-height: 1.3; }
+.week-evt.blue { background: var(--blue-pale); border-left-color: var(--blue); }
+.week-evt.green { background: var(--green-pale); border-left-color: var(--green); }
+.week-evt-time { font-family: 'Inconsolata', monospace; font-size: 9px; color: var(--ink-light); margin-bottom: 1px; }
+.week-empty { font-size: 11px; color: var(--ink-light); text-align: center; padding: 12px 8px; font-style: italic; }
+
+/* Tools page */
+.tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-decoration: none; display: block; transition: all 0.2s; animation: fadeUp 0.35s ease both; }
+.tool-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(181,129,58,0.1); }
+.tool-card.coming { opacity: 0.5; pointer-events: none; }
+.tool-card:nth-child(2) { animation-delay: 0.06s; }
+.tool-card:nth-child(3) { animation-delay: 0.12s; }
+.tool-card:nth-child(4) { animation-delay: 0.18s; }
+.tool-card:nth-child(5) { animation-delay: 0.24s; }
+.tool-icon { font-size: 26px; margin-bottom: 12px; }
+.tool-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--ink); margin-bottom: 7px; }
+.tool-desc { font-size: 13px; color: var(--ink-mid); line-height: 1.7; margin-bottom: 16px; }
+.tool-open { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+
+/* Loading / empty */
+.loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 28px; color: var(--ink-light); font-size: 13px; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { padding: 28px; text-align: center; color: var(--ink-light); font-size: 13px; line-height: 1.7; }
+.empty-icon { font-size: 22px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-top">
+    <div class="monogram">L</div>
+    <div class="sidebar-name">Logan Lepire</div>
+    <div class="sidebar-role">Sadle Real Estate · Portland</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Views</div>
+    <a class="nav-item active" onclick="showPage('dashboard',this)" href="#">
+      <span class="nav-icon">⊞</span> Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('tools',this)" href="#">
+      <span class="nav-icon">🛠</span> All Tools
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Tools</div>
+    <a class="nav-item" href="logan-followup-system.html" target="_blank">
+      <span class="nav-icon">📋</span> Follow-Up System
+    </a>
+    <a class="nav-item" href="OpenHousePicker.html" target="_blank">
+      <span class="nav-icon">🏠</span> Open House Tool
+    </a>
+    <a class="nav-item disabled">
+      <span class="nav-icon">🔗</span> Follow Up Boss
+      <span class="coming-tag">Soon</span>
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Quick Access</div>
+    <a class="nav-item" href="https://mail.google.com" target="_blank"><span class="nav-icon">📧</span> Gmail</a>
+    <a class="nav-item" href="https://calendar.google.com" target="_blank"><span class="nav-icon">📅</span> Calendar</a>
+    <a class="nav-item" href="https://tasks.google.com" target="_blank"><span class="nav-icon">✅</span> Google Tasks</a>
+    <a class="nav-item" href="https://make.com" target="_blank"><span class="nav-icon">⚙️</span> Make.com</a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-date" id="sidebarDate"></div>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow" id="greeting">Good morning</div>
+        <h1 class="page-title">Welcome back, <em>Logan</em></h1>
+      </div>
+      <div class="tab-switcher">
+        <button class="tab-btn active" onclick="switchTab('daily',this)">Today</button>
+        <button class="tab-btn" onclick="switchTab('weekly',this)">This Week</button>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-icon">🗓</div>
+        <div><div class="stat-val" id="statToday">—</div><div class="stat-lbl">Today</div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon">📋</div>
+        <div><div class="stat-val" id="statEvents">—</div><div class="stat-lbl">Events Today</div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon green">✅</div>
+        <div><div class="stat-val" id="statTasks">—</div><div class="stat-lbl">Tasks Remaining</div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon blue">📅</div>
+        <div><div class="stat-val" id="statDays">—</div><div class="stat-lbl">Days as Agent</div></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- DAILY -->
+      <div class="tab-content active" id="tab-daily">
+        <div class="daily-grid">
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📅 Today's Schedule</div>
+              <a class="card-action" href="https://calendar.google.com" target="_blank">Open ↗</a>
+            </div>
+            <div class="card-body">
+              <div id="todayEvents" class="event-list">
+                <div class="loading"><div class="spinner"></div> Loading...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">✅ Tasks</div>
+              <a class="card-action" href="https://tasks.google.com" target="_blank">Open ↗</a>
+            </div>
+            <div class="card-body">
+              <div id="tasksList" class="task-list"></div>
+              <div class="task-add">
+                <input class="task-input" id="newTaskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()" />
+                <button class="task-add-btn" onclick="addTask()">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📧 Email</div>
+              <a class="card-action" href="https://mail.google.com" target="_blank">Open ↗</a>
+            </div>
+            <div class="card-body">
+              <div class="email-ph">
+                <div class="email-ph-icon">🤖</div>
+                <div class="email-ph-title">AI Email Assistant</div>
+                <div class="email-ph-desc">Coming soon — Claude will read your inbox and sort emails into <strong>Needs Reply</strong>, <strong>Waiting On</strong>, and <strong>Important</strong>, with smart labels for everything else.</div>
+                <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="btn-gold">Open Gmail →</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- WEEKLY -->
+      <div class="tab-content" id="tab-weekly">
+        <div class="week-grid" id="weekGrid">
+          <div class="loading" style="grid-column:1/-1"><div class="spinner"></div> Loading week...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="page" id="page-tools">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Agent Toolkit</div>
+        <h1 class="page-title">Your <em>Tools</em></h1>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="tools-grid">
+        <a class="tool-card" href="logan-followup-system.html" target="_blank">
+          <div class="tool-icon">📋</div>
+          <div class="tool-name">Client Follow-Up System</div>
+          <div class="tool-desc">Book an appointment and automatically send a confirmation, 24hr reminder, and 1hr reminder — plus a text to yourself to send your follow-up email.</div>
+          <div class="tool-open">Open Tool →</div>
+        </a>
+        <a class="tool-card" href="OpenHousePicker.html" target="_blank">
+          <div class="tool-icon">🏠</div>
+          <div class="tool-name">Open House Tool</div>
+          <div class="tool-desc">Capture visitor information at open houses, manage leads, and follow up with attendees after the event.</div>
+          <div class="tool-open">Open Tool →</div>
+        </a>
+        <a class="tool-card" href="logan-followup-system.html" target="_blank">
+          <div class="tool-icon">✅</div>
+          <div class="tool-name">Post-Meeting Follow-Up</div>
+          <div class="tool-desc">Generate a personalized follow-up email with meeting notes and a next steps checklist tailored to each appointment type.</div>
+          <div class="tool-open">Open Tool →</div>
+        </a>
+        <a class="tool-card coming">
+          <div class="tool-icon">🔗</div>
+          <div class="tool-name">Follow Up Boss MCP</div>
+          <div class="tool-desc">Connect directly to your CRM to manage leads, tasks, and pipeline without switching apps.</div>
+          <div class="tool-open" style="color:var(--ink-light)">Coming Soon</div>
+        </a>
+        <a class="tool-card coming">
+          <div class="tool-icon">🤖</div>
+          <div class="tool-name">AI Email Assistant</div>
+          <div class="tool-desc">Claude reads your inbox and automatically sorts emails into needs reply, waiting on, and important — with smart labels for everything else.</div>
+          <div class="tool-open" style="color:var(--ink-light)">Coming Soon</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_S = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+// Nav
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='weekly') renderWeek();
+}
+
+// Date display
+function initDate() {
+  const h = now.getHours();
+  document.getElementById('greeting').textContent = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('statToday').textContent = `${MONTHS_S[now.getMonth()]} ${now.getDate()}`;
+  const days = Math.floor((now - new Date('2025-07-04')) / 86400000);
+  document.getElementById('statDays').textContent = days;
+  document.getElementById('sidebarDate').innerHTML = `${DAYS[now.getDay()]}<br>${MONTHS_S[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+
+// Tasks (localStorage)
+let tasks = JSON.parse(localStorage.getItem('logan_tasks')||'[]');
+function saveTasks(){ localStorage.setItem('logan_tasks', JSON.stringify(tasks)); }
+
+function renderTasks() {
+  const remaining = tasks.filter(t=>!t.done).length;
+  document.getElementById('statTasks').textContent = remaining;
+  const list = document.getElementById('tasksList');
+  if(tasks.length===0){
+    list.innerHTML = `<div class="empty"><div class="empty-icon">✨</div>No tasks yet — add one below</div>`;
+    return;
+  }
+  list.innerHTML = tasks.map((t,i)=>`
+    <div class="task-item ${t.done?'done':''}" onclick="toggleTask(${i})">
+      <div class="task-check">${t.done?'✓':''}</div>
+      <div class="task-title">${t.title}</div>
+    </div>
+  `).join('');
+}
+
+function addTask() {
+  const inp = document.getElementById('newTaskInput');
+  const v = inp.value.trim();
+  if(!v) return;
+  tasks.unshift({title:v, done:false});
+  saveTasks(); renderTasks();
+  inp.value = '';
+}
+
+function toggleTask(i) {
+  tasks[i].done = !tasks[i].done;
+  saveTasks(); renderTasks();
+}
+
+// Calendar
+const PROXY = 'https://api.allorigins.win/get?url=';
+const CAL = 'https://calendar.google.com/calendar/ical/logan%40sadlerealestate.com/public/basic.ics';
+let events = [];
+
+async function loadCal() {
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(CAL));
+    const data = await res.json();
+    events = parseICS(data.contents);
+    renderToday();
+  } catch(e) {
+    document.getElementById('todayEvents').innerHTML = `<div class="empty"><div class="empty-icon">📅</div>Calendar unavailable.<br><a href="https://calendar.google.com" target="_blank" style="color:var(--gold);">Open Google Calendar →</a></div>`;
+    document.getElementById('statEvents').textContent = '—';
+  }
+}
+
+function parseICS(ics) {
+  const evts = [];
+  const blocks = ics.split('BEGIN:VEVENT');
+  blocks.shift();
+  blocks.forEach(b => {
+    const get = k => { const m = b.match(new RegExp(k+'[^:]*:([^\\r\\n]+')); return m?m[1].trim():''; };
+    const summary = get('SUMMARY');
+    const dtstart = get('DTSTART');
+    const location = get('LOCATION');
+    if(!summary||!dtstart) return;
+    const parseD = s => {
+      if(!s) return null;
+      if(s.length===8) return new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8));
+      return new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8), +s.slice(9,11), +s.slice(11,13));
+    };
+    const dtend = get('DTEND');
+    evts.push({ summary, start: parseD(dtstart), end: parseD(dtend), location, allDay: dtstart.length===8 });
+  });
+  return evts.sort((a,b)=>a.start-b.start);
+}
+
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
+function fmtT(d){ if(!d) return ''; const h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM'; return `${h%12||12}:${String(m).padStart(2,'0')} ${ap}`; }
+
+function renderToday() {
+  const todays = events.filter(e=>e.start&&sameDay(e.start,today));
+  document.getElementById('statEvents').textContent = todays.length;
+  const c = document.getElementById('todayEvents');
+  if(todays.length===0){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">🌿</div>No events today.<br>Enjoy the open day!</div>`;
+    return;
+  }
+  const colors=['','blue','green','red'];
+  c.innerHTML = todays.map((e,i)=>`
+    <div class="event-item ${colors[i%colors.length]}">
+      <div class="event-time">${e.allDay?'All day':fmtT(e.start)}</div>
+      <div>
+        <div class="event-title">${e.summary}</div>
+        ${e.location?`<div class="event-sub">📍 ${e.location}</div>`:''}
+        ${!e.allDay&&e.end?`<div class="event-sub">Until ${fmtT(e.end)}</div>`:''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderWeek() {
+  const dow = today.getDay();
+  const mon = new Date(today);
+  mon.setDate(today.getDate()-(dow===0?6:dow-1));
+  const days = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+  const colors=['','blue','green'];
+  document.getElementById('weekGrid').innerHTML = days.map(d=>{
+    const isToday = sameDay(d,today);
+    const evts = events.filter(e=>e.start&&sameDay(e.start,d));
+    return `
+      <div class="week-day ${isToday?'today':''}">
+        <div class="week-day-head">
+          <div class="week-day-name">${DAYS_S[d.getDay()]}</div>
+          <div class="week-day-num">${d.getDate()}</div>
+        </div>
+        <div class="week-day-events">
+          ${evts.length===0
+            ? `<div class="week-empty">Free</div>`
+            : evts.map((e,i)=>`<div class="week-evt ${colors[i%colors.length]}"><div class="week-evt-time">${e.allDay?'All day':fmtT(e.start)}</div>${e.summary}</div>`).join('')
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+initDate();
+renderTasks();
+loadCal();
+</script>
+</body>
+</html>
